@@ -1,5 +1,5 @@
 // api/predict.js — DEPRESSEDESIGN Macro Predictor Backend
-// Vercel Serverless Function (Node.js) - V5 (DXY METER + TELEGRAM ALERT)
+// Vercel Serverless Function (Node.js) - V6 (VISUAL TELEGRAM TERMINAL)
 
 const axios = require("axios");
 
@@ -7,31 +7,42 @@ const axios = require("axios");
 const TELEGRAM_TOKEN = "8325927674:AAF3xv3r0NRRTet5H-xaK1DKIwWshemVOeU"; 
 const TELEGRAM_CHAT_ID = "5595296615";
 
-// Fungsi untuk menembak pesan ke Telegram
-async function sendTelegramAlert(masterSignal, totalScore, dxyCurrent) {
+// Fungsi untuk menembak pesan ke Telegram dengan UI Terminal
+async function sendTelegramAlert(masterSignal, totalScore, dxy, nfp, cpi, growth, fed) {
   try {
     // Bot HANYA ngirim pesan kalau sinyalnya STRONG (Skor >= 40 atau <= -40)
-    // Kalau mau bot selalu ngirim pesan setiap di-refresh, hapus atau beri comment (//) pada baris di bawah ini:
     if (totalScore > -40 && totalScore < 40) return;
 
-    const emoji = totalScore >= 40 ? "🔴" : "🟢";
-    const action = totalScore >= 40 ? "SELL XAU/USD" : "BUY XAU/USD";
-    
+    const isSell = totalScore >= 40;
+    const mainIcon = isSell ? "🔴" : "🟢";
+    const actionText = isSell ? "SELL XAU/USD" : "BUY XAU/USD";
+    const biasText = isSell ? "USD Menguat (Fokus cari setup Sell Gold)" : "USD Melemah (Fokus cari setup Buy Gold)";
+
+    // Helper untuk icon per indikator
+    const getIcon = (score) => score > 0 ? "🟥" : score < 0 ? "🟩" : "🟨";
+    const getSign = (score) => score > 0 ? "+" : "";
+
     const message = `
-${emoji} *DEPRESSEDESIGN MACRO ALERT* ${emoji}
-
-*SIGNAL:* ${action} (Skor: ${totalScore})
-*DXY (US Dollar):* ${dxyCurrent}
-
-_Cek dashboard untuk detail lengkap:_
-[Buka Dashboard](https://depressedesign-macro.vercel.app/)
-    `;
+<b>${mainIcon} DEPRESSEDESIGN MACRO TERMINAL ${mainIcon}</b>
+━━━━━━━━━━━━━━━━━━━━━━
+🎯 <b>SIGNAL:</b> ${actionText}
+📊 <b>SCORE:</b> ${getSign(totalScore)}${totalScore}
+💵 <b>DXY LIVE:</b> ${dxy.current} <i>(${dxy.status})</i>
+━━━━━━━━━━━━━━━━━━━━━━
+⚙️ <b>ENGINE BREAKDOWN:</b>
+${getIcon(nfp.score)} <b>NFP</b>: ${getSign(nfp.score)}${nfp.score} pts
+${getIcon(cpi.score)} <b>CPI</b>: ${getSign(cpi.score)}${cpi.score} pts
+${getIcon(growth.score)} <b>GROWTH</b>: ${getSign(growth.score)}${growth.score} pts
+${getIcon(fed.score)} <b>FED</b>: ${getSign(fed.score)}${fed.score} pts
+━━━━━━━━━━━━━━━━━━━━━━
+💡 <i>Bias: ${biasText}</i>
+`;
 
     const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
     await axios.post(url, {
       chat_id: TELEGRAM_CHAT_ID,
       text: message,
-      parse_mode: "Markdown",
+      parse_mode: "HTML",
       disable_web_page_preview: true
     });
     console.log("Telegram alert sent!");
@@ -233,8 +244,8 @@ module.exports = async (req, res) => {
     if (totalScore >= 40) masterSignal = "STRONG SELL XAU";
     if (totalScore <= -40) masterSignal = "STRONG BUY XAU";
 
-    // Pemicu Telegram Alert
-    await sendTelegramAlert(masterSignal, totalScore, dxy.current);
+    // Pemicu Telegram Alert dengan data lengkap
+    await sendTelegramAlert(masterSignal, totalScore, dxy, nfp, cpi, growth, fed);
 
     const payload = {
       success: true,
