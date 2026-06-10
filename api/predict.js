@@ -1,5 +1,5 @@
 // api/predict.js — DEPRESSEDESIGN Macro Predictor Backend
-// Vercel Serverless Function (Node.js) - V17 (MTF AGGRESSIVE SNIPER ENGINE)
+// Vercel Serverless Function (Node.js) - V18 (ULTRA-AGGRESSIVE MTF ENGINE)
 
 const axios = require("axios");
 
@@ -27,7 +27,7 @@ async function sendTelegramAlert(masterSignal, totalScore, dxy, nfp, cpi, growth
 async function sendTechnicalSignalTelegram(tech) {
   try {
     const icon = tech.position.includes("BUY") ? "🟢" : "🔴";
-    const message = `${icon} <b>AGRESSIVE MTF SIGNAL DETECTED</b> ${icon}\n━━━━━━━━━━━━━━━━━━━━━━\n🎯 <b>POSITION:</b> ${tech.position}\n💸 <b>ENTRY AREA (M1):</b> $${tech.entry}\n🛑 <b>STOP LOSS:</b> $${tech.sl}\n💰 <b>TARGET 1:</b> $${tech.tp1}\n💰 <b>TARGET 2:</b> $${tech.tp2}\n━━━━━━━━━━━━━━━━━━━━━━\n📝 <b>TOP-DOWN ANALYSIS REASONING:</b>\n${tech.reason.map(r => `• ${r}`).join('\n')}`;
+    const message = `${icon} <b>ULTRA-AGGRESSIVE MTF SIGNAL</b> ${icon}\n━━━━━━━━━━━━━━━━━━━━━━\n🎯 <b>POSITION:</b> ${tech.position}\n💸 <b>ENTRY AREA (M1):</b> $${tech.entry}\n🛑 <b>STOP LOSS:</b> $${tech.sl}\n💰 <b>TARGET 1:</b> $${tech.tp1}\n💰 <b>TARGET 2:</b> $${tech.tp2}\n━━━━━━━━━━━━━━━━━━━━━━\n📝 <b>TOP-DOWN ANALYSIS REASONING:</b>\n${tech.reason.map(r => `• ${r}`).join('\n')}`;
     await axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, { chat_id: TELEGRAM_CHAT_ID, text: message, parse_mode: "HTML" });
   } catch (err) {}
 }
@@ -82,13 +82,13 @@ async function fetchChartData(interval, range) {
   return { c, o, h, l, v, current: c[c.length - 1] };
 }
 
-// ─── THE NEW MTF AGGRESSIVE ENGINE ───────────────────────────────────────────
+// ─── THE NEW ULTRA-AGGRESSIVE ENGINE ───────────────────────────────────────────
 async function calculateNativeAlgorithms() {
   try {
-    // Tarik 3 Timeframe Sekaligus: H1 (Trend), M15 (Structure), M1 (Execution)
-    const [h1, m15, m1] = await Promise.all([
+    // Tarik 3 Timeframe Sekaligus: H1 (Trend), M5 (Minor Structure), M1 (Execution)
+    const [h1, m5, m1] = await Promise.all([
       fetchChartData('1h', '5d'),
-      fetchChartData('15m', '2d'),
+      fetchChartData('5m', '2d'), // Ganti ke M5 biar agresif nangkap koreksi kecil
       fetchChartData('1m', '1d')
     ]);
 
@@ -99,57 +99,58 @@ async function calculateNativeAlgorithms() {
     const h1Ema50 = calculateEMA(h1.c, 50);
     const h1Trend = h1Ema20[h1Ema20.length - 1] > h1Ema50[h1Ema50.length - 1] ? "BULLISH" : "BEARISH";
 
-    // 2. MTF ANALYSIS (M15) - Penentuan Area Konfirmasi / POI
-    const m15Pivots = findPivots(m15.h, m15.l, 5, 5);
-    const m15Res = m15Pivots.pivotHighs.length > 0 ? m15Pivots.pivotHighs[m15Pivots.pivotHighs.length - 1].val : m15.h[m15.h.length - 5];
-    const m15Sup = m15Pivots.pivotLows.length > 0 ? m15Pivots.pivotLows[m15Pivots.pivotLows.length - 1].val : m15.l[m15.l.length - 5];
+    // 2. MTF ANALYSIS (M5) - Penentuan Area Konfirmasi Minor (Breaker Block)
+    // Perkecil radius pivot ke 3 (Minor Swing) biar nggak nunggu pullback kejauhan
+    const m5Pivots = findPivots(m5.h, m5.l, 3, 3);
+    const m5Res = m5Pivots.pivotHighs.length > 0 ? m5Pivots.pivotHighs[m5Pivots.pivotHighs.length - 1].val : m5.h[m5.h.length - 3];
+    const m5Sup = m5Pivots.pivotLows.length > 0 ? m5Pivots.pivotLows[m5Pivots.pivotLows.length - 1].val : m5.l[m5.l.length - 3];
 
     let position = "WAIT & SEE / NO SETUP";
-    let entry = currentPrice.toFixed(2);
-    let sl = (currentPrice - 2).toFixed(2);
-    let tp1 = (currentPrice + 4).toFixed(2);
-    let tp2 = (currentPrice + 8).toFixed(2);
+    let entry = "0.00";
+    let sl = "0.00";
+    let tp1 = "0.00";
+    let tp2 = "0.00";
     let reasonArr = [];
 
-    // 3. LTF EXECUTION (M1) - Penembak Jitu Agresif
-    // SETUP BUY: H1 Bullish, dan harga (M1) jatuh menyentuh Support/Demand M15
-    if (h1Trend === "BULLISH" && currentPrice <= (m15Sup + 2.5) && currentPrice >= (m15Sup - 1.5)) {
+    // 3. LTF EXECUTION (M1) - Penembak Jitu Super Agresif
+    // SETUP BUY: H1 Bullish, harga (M1) nyentuh minor Support M5 (Toleransi 2 poin)
+    if (h1Trend === "BULLISH" && currentPrice <= (m5Sup + 2.0) && currentPrice >= (m5Sup - 1.5)) {
       position = "BUY LIMIT / BUY NOW (LTF AGGRESSIVE)";
       entry = currentPrice.toFixed(2);
-      sl = (m15Sup - 3).toFixed(2); // SL super tipis di bawah Support M15
+      sl = (m5Sup - 3).toFixed(2); // SL super ketat
       tp1 = (currentPrice + 5).toFixed(2);
       tp2 = (currentPrice + 12).toFixed(2);
       reasonArr = [
         `HTF (H1): Market structure & EMA Trend adalah BULLISH`,
-        `MTF (M15): Harga terkoreksi ke zona Demand / Order Block ($${m15Sup.toFixed(2)})`,
+        `MTF (M5): Harga terkoreksi ke minor Demand / Breaker Block ($${m5Sup.toFixed(2)})`,
         `LTF (M1): Momentum oversold agresif, siap eksekusi rejection ke atas`
       ];
     }
-    // SETUP SELL: H1 Bearish, dan harga (M1) meroket menyentuh Resistance/Supply M15
-    else if (h1Trend === "BEARISH" && currentPrice >= (m15Res - 2.5) && currentPrice <= (m15Res + 1.5)) {
+    // SETUP SELL: H1 Bearish, harga (M1) nyentuh minor Resistance M5 (Toleransi 2 poin)
+    else if (h1Trend === "BEARISH" && currentPrice >= (m5Res - 2.0) && currentPrice <= (m5Res + 1.5)) {
       position = "SELL LIMIT / SELL NOW (LTF AGGRESSIVE)";
       entry = currentPrice.toFixed(2);
-      sl = (m15Res + 3).toFixed(2); // SL super tipis di atas Resistance M15
+      sl = (m5Res + 3).toFixed(2); // SL super ketat
       tp1 = (currentPrice - 5).toFixed(2);
       tp2 = (currentPrice - 12).toFixed(2);
       reasonArr = [
         `HTF (H1): Market structure & EMA Trend adalah BEARISH`,
-        `MTF (M15): Harga *rally* ke zona Supply / Order Block ($${m15Res.toFixed(2)})`,
+        `MTF (M5): Harga pullback ke minor Supply / Breaker Block ($${m5Res.toFixed(2)})`,
         `LTF (M1): Momentum overbought agresif, siap eksekusi penolakan ke bawah`
       ];
     } else {
       // Kondisi No Setup (Menunggu)
-      const targetArea = h1Trend === "BULLISH" ? m15Sup : m15Res;
+      const targetArea = h1Trend === "BULLISH" ? m5Sup : m5Res;
       reasonArr = [
         `HTF (H1): Trend skala besar terpantau ${h1Trend}`,
-        `MTF (M15): Menunggu harga masuk ke zona eksekusi SMC ($${targetArea.toFixed(2)})`,
-        `LTF (M1): Harga saat ini ($${currentPrice.toFixed(2)}) belum memicu sinyal agresif`
+        `MTF (M5): Menunggu harga masuk ke zona agresif SMC ($${targetArea.toFixed(2)})`,
+        `LTF (M1): Harga saat ini ($${currentPrice.toFixed(2)}) belum memicu sinyal eksekusi`
       ];
     }
 
     return { currentPrice: currentPrice.toFixed(2), position, entry, sl, tp1, tp2, reason: reasonArr };
   } catch (err) {
-    return { currentPrice: "N/A", position: "WAIT & SEE / NO SETUP", entry: "0", sl: "0", tp1: "0", tp2: "0", reason: ["Menunggu sinkronisasi data chart MTF."] };
+    return { currentPrice: "N/A", position: "WAIT & SEE / NO SETUP", entry: "0.00", sl: "0.00", tp1: "0.00", tp2: "0.00", reason: ["Menunggu sinkronisasi data chart MTF."] };
   }
 }
 
@@ -192,14 +193,12 @@ module.exports = async (req, res) => {
       const currentSignalID = tech.position + "_" + tech.entry;
       
       if (!tech.position.includes("WAIT & SEE")) {
-        // Kalau ketemu setup agresif baru
         if (currentSignalID !== lastSentSignalID) {
           await sendTechnicalSignalTelegram(tech);
           lastSentSignalID = currentSignalID; 
           isSignalActive = true;
         }
       } else {
-        // Kalau harga udah kabur dari zona / invalid
         if (isSignalActive === true) {
           await sendInvalidSignalTelegram();
           lastSentSignalID = ""; 
