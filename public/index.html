@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DEPRESSEDESIGN · Macro Predictor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            mono: ['"IBM Plex Mono"', 'monospace'],
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            bg: {
+              base: '#080B0F',
+              card: '#0D1117',
+              elevated: '#161B22',
+              border: '#21262D',
+            },
+            signal: {
+              buy: '#00FF88',
+              sell: '#FF3B3B',
+              wait: '#F0B429',
+              buyDim: 'rgba(0,255,136,0.08)',
+              sellDim: 'rgba(255,59,59,0.08)',
+              waitDim: 'rgba(240,180,41,0.08)',
+            },
+            ink: {
+              primary: '#E6EDF3',
+              secondary: '#8B949E',
+              muted: '#484F58',
+            }
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'scan': 'scan 2s linear infinite',
+          },
+          keyframes: {
+            scan: {
+              '0%': { transform: 'translateY(-100%)' },
+              '100%': { transform: 'translateY(100vh)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { background-color: #080B0F; font-family: 'Inter', sans-serif; }
+
+    /* Scanline overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.04) 2px,
+        rgba(0,0,0,0.04) 4px
+      );
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* Grid background */
+    .grid-bg {
+      background-image:
+        linear-gradient(rgba(33,38,45,0.6) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(33,38,45,0.6) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    /* Neon glow effects */
+    .glow-buy  { box-shadow: 0 0 20px rgba(0,255,136,0.15), 0 0 40px rgba(0,255,136,0.05); }
+    .glow-sell { box-shadow: 0 0 20px rgba(255,59,59,0.15),  0 0 40px rgba(255,59,59,0.05); }
+    .glow-wait { box-shadow: 0 0 20px rgba(240,180,41,0.15), 0 0 40px rgba(240,180,41,0.05); }
+
+    .signal-buy  { color: #00FF88; }
+    .signal-sell { color: #FF3B3B; }
+    .signal-wait { color: #F0B429; }
+
+    .border-buy  { border-color: rgba(0,255,136,0.4); }
+    .border-sell { border-color: rgba(255,59,59,0.4); }
+    .border-wait { border-color: rgba(240,180,41,0.4); }
+
+    .bg-buy-dim  { background-color: rgba(0,255,136,0.06); }
+    .bg-sell-dim { background-color: rgba(255,59,59,0.06); }
+    .bg-wait-dim { background-color: rgba(240,180,41,0.06); }
+
+    /* Score bar */
+    .score-track {
+      background: #161B22;
+      border-radius: 2px;
+      height: 6px;
+      overflow: hidden;
+      position: relative;
+    }
+    .score-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Ticker tape */
+    @keyframes ticker {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .ticker-inner {
+      display: flex;
+      white-space: nowrap;
+      animation: ticker 30s linear infinite;
+    }
+
+    /* Blinking cursor */
+    @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+    .cursor { animation: blink 1s step-start infinite; }
+
+    /* Refresh spin */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinning { animation: spin 0.8s linear infinite; }
+
+    /* Card hover */
+    .macro-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .macro-card:hover { transform: translateY(-2px); }
+
+    /* Status dot */
+    @keyframes statusPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.8); }
+    }
+    .status-dot { animation: statusPulse 2s ease-in-out infinite; }
+
+    /* Row hover */
+    .data-row { transition: background 0.15s ease; }
+    .data-row:hover { background: rgba(255,255,255,0.03); }
+
+    /* Loading skeleton */
+    @keyframes shimmer {
+      0%   { background-position: -600px 0; }
+      100% { background-position: 600px 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg, #161B22 25%, #1E242C 50%, #161B22 75%);
+      background-size: 600px 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen text-[#E6EDF3] grid-bg">
+
+  <!-- ── Ticker tape ───────────────────────────────────────────────── -->
+  <div class="overflow-hidden bg-[#0D1117] border-b border-[#21262D] h-8 flex items-center">
+    <div class="ticker-inner font-mono text-xs text-[#484F58]">
+      <span class="px-8">DEPRESSEDESIGN MACRO PREDICTOR &nbsp;·&nbsp; FOREX &amp; XAU/USD SIGNALS &nbsp;·&nbsp; NFP PREDICTOR &nbsp;·&nbsp; CPI PREDICTOR &nbsp;·&nbsp; ADP &nbsp;·&nbsp; JOLTS &nbsp;·&nbsp; ISM PMI &nbsp;·&nbsp; PPI &nbsp;·&nbsp; WTI CRUDE OIL &nbsp;·&nbsp; NOT FINANCIAL ADVICE &nbsp;·&nbsp;</span>
+      <span class="px-8">DEPRESSEDESIGN MACRO PREDICTOR &nbsp;·&nbsp; FOREX &amp; XAU/USD SIGNALS &nbsp;·&nbsp; NFP PREDICTOR &nbsp;·&nbsp; CPI PREDICTOR &nbsp;·&nbsp; ADP &nbsp;·&nbsp; JOLTS &nbsp;·&nbsp; ISM PMI &nbsp;·&nbsp; PPI &nbsp;·&nbsp; WTI CRUDE OIL &nbsp;·&nbsp; NOT FINANCIAL ADVICE &nbsp;·&nbsp;</span>
+    </div>
+  </div>
+
+  <!-- ── Header ────────────────────────────────────────────────────── -->
+  <header class="border-b border-[#21262D] px-6 py-4">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4 flex-wrap">
+
+      <div class="flex items-center gap-4">
+        <!-- Logo mark -->
+        <div class="w-9 h-9 border border-[#00FF88] flex items-center justify-center relative">
+          <div class="w-2 h-2 bg-[#00FF88]"></div>
+          <div class="absolute inset-0 bg-[#00FF88] opacity-5"></div>
+        </div>
+        <div>
+          <div class="font-mono text-sm font-bold tracking-[0.15em] text-[#E6EDF3] uppercase">DEPRESSEDESIGN</div>
+          <div class="font-mono text-[10px] text-[#484F58] tracking-[0.2em] uppercase">Macro Predictor v2.0</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <!-- Live indicator -->
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 rounded-full bg-[#00FF88] status-dot"></div>
+          <span class="font-mono text-xs text-[#8B949E]" id="lastUpdate">READY</span>
+        </div>
+
+        <!-- Refresh button -->
+        <button
+          id="refreshBtn"
+          onclick="loadData()"
+          class="flex items-center gap-2 px-4 py-2 border border-[#21262D] bg-[#0D1117] hover:border-[#00FF88] hover:text-[#00FF88] font-mono text-xs tracking-widest uppercase transition-all duration-200 active:scale-95"
+        >
+          <svg id="refreshIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Refresh Data
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Hero banner ───────────────────────────────────────────────── -->
+  <div class="max-w-6xl mx-auto px-6 pt-8 pb-2">
+    <div class="flex items-end gap-3 mb-1">
+      <h1 class="font-mono text-2xl md:text-3xl font-bold tracking-tight text-[#E6EDF3]">
+        MACRO SENTIMENT<span class="cursor text-[#00FF88]">_</span>
+      </h1>
+    </div>
+    <p class="font-sans text-sm text-[#8B949E] max-w-xl">
+      Leading indicator composite scores predicting NFP &amp; CPI outcomes — and their directional impact on XAU/USD.
+    </p>
+  </div>
+
+  <!-- ── Main grid ─────────────────────────────────────────────────── -->
+  <main class="max-w-6xl mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- ─ NFP CARD ───────────────────────────────────────────────── -->
+    <div id="nfpCard" class="macro-card bg-[#0D1117] border border-[#21262D] rounded-none">
+
+      <!-- Card header -->
+      <div class="flex items-center justify-between px-5 py-4 border-b border-[#21262D]">
+        <div class="flex items-center gap-3">
+          <div class="font-mono text-[10px] tracking-[0.2em] text-[#484F58] uppercase">01</div>
+          <div>
+            <div class="font-mono text-sm font-bold text-[#E6EDF3] tracking-wide">NFP PREDICTOR</div>
+            <div class="font-mono text-[10px] text-[#484F58]">Nonfarm Payrolls — USD Sentiment</div>
+          </div>
+        </div>
+        <div class="font-mono text-[10px] text-[#484F58] uppercase tracking-wider">XAU/USD</div>
+      </div>
+
+      <!-- Signal banner -->
+      <div id="nfpSignalBanner" class="px-5 py-5 border-b border-[#21262D] bg-[#0D1117]">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <div class="font-mono text-[10px] text-[#484F58] uppercase tracking-widest mb-2">Final Signal</div>
+            <div id="nfpSignal" class="font-mono text-xl md:text-2xl font-bold text-[#484F58]">— AWAITING DATA —</div>
+          </div>
+          <div class="text-right">
+            <div class="font-mono text-[10px] text-[#484F58] uppercase tracking-widest mb-2">Score</div>
+            <div id="nfpScore" class="font-mono text-3xl font-bold text-[#484F58]">—</div>
+          </div>
+        </div>
+        <!-- Score bar -->
+        <div class="mt-4">
+          <div class="flex justify-between font-mono text-[9px] text-[#484F58] mb-1">
+            <span>-100 (BAD USD)</span><span>0</span><span>+100 (GOOD USD)</span>
+          </div>
+          <div class="score-track">
+            <div id="nfpBar" class="score-fill w-1/2 bg-[#484F58]"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Components -->
+      <div class="divide-y divide-[#21262D]">
+
+        <!-- ADP Row -->
+        <div class="data-row px-5 py-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <div class="w-1 h-4 bg-[#484F58] rounded-full" id="adpBar"></div>
+              <span class="font-mono text-xs font-semibold text-[#8B949E] uppercase tracking-wider">ADP Nonfarm</span>
+            </div>
+            <div id="adpPoints" class="font-mono text-xs font-bold text-[#484F58]">± 50 pts</div>
+          </div>
+          <div class="grid grid-cols-3 gap-2" id="adpRow">
+            <div class="bg-[#161B22] px-3 py-2">
+              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Actual</div>
+              <div class="skeleton h-4 w-16"></div>
+            </div>
+            <div class="bg-[#161B22] px-3 py-2">
+              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Forecast</div>
+              <div class="skeleton h-4 w-16"></div>
+            </div>
+            <div class="bg-[#161B22] px-3 py-2">
+              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Status</div>
+              <div class="skeleton h-4 w-16"></div>
+            </div>
+          </div>
+          <div class="mt-1 font-mono text-[9px] text-[#484F58]" id="adpDate"></div>
+        </div>
+
+        <!-- ISM Row -->
+        <div class="data-row px-5 py-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <div class="w-1 h-4 bg-[#484F58] rounded-full" id="ismBar"></div>
+              <span class="font-mono text-xs font-semibold text-[#8B949E] uppercase tracking-wider">ISM Manufacturing PMI</span>
+            </div>
+            <div id="ismPoints" class="font-mono text-xs font-bold text-[#484F58]">± 30 pts</div>
+          </div>
+          <div class="grid grid-cols-3 gap-2" id="ismRow">
+            <div class="bg-[#161B22] px-3 py-2">
+              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Actual</div>
+              <div class="skeleton h-4 w-16"></div>
+            </div>
+            <div class="bg-[#161B22] px-3 py-2">
+              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Threshold</div>
+              <div class="skeleton h-4 w-16"></div>
+            </div>
+            <div class="bg-[#161B22] px-3 py-2">
+              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Status</div>
+              <div class="skeleton h-4 w-16"></div>
+            </div>
+          </div>
+          <div class="mt-1 font-mono text-[9px] text-[#484F58]" id="ismDate"></div>
+        </div>
+
+        <!-- JOLTs Row -->
+        <div class="data-row px-5 py-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <div class="w-1 h-4 bg-[#484F58] rounded-full" id="joltsBar"></div>
+              <span class="font-mono text-xs font-semibold text-[#8B949E] uppercase tracking-wider">JOLTs Job Openings</span>
+            </div>
+            <div id="joltsPoints" class="font-mono text-xs font-bold text-[#484F58]">± 20 pts</div>
+          </div>
+          <div class="grid grid-cols-3 gap-2" id="joltsRow">
+            <div class="bg-[#161B22] px-3 py-2">
+              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Actual</div>
+              <div class="skeleton h-4 w-16"></div>
+            </div>
+            <div class="bg-[#161B22] px-3 py-2">
+              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Forecast</div>
+              <div class="skeleton h-4 w-16"></div>
+            </div>
+            <div class="bg-[#161B22] px-3 py-2">
+              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Status</div>
+              <div class="skeleton h-4 w-16"></div>
+            </div>
+          </div>
+          <div class="mt-1 font-mono text-[9px] text-[#484F58]" id="joltsDate"></div>
+        </div>
+
+      </div><!-- end components -->
+
+      <!-- Card footer -->
+      <div class="px-5 py-3 bg-[#080B0F] border-t border-[#21262D] flex items-center justify-between">
+        <span class="font-mono text-[9px] text-[#484F58] uppercase tracking-widest">Score &gt; 40 → SELL XAU &nbsp;|&nbsp; Score &lt; -40 → BUY XAU</span>
+        <span class="font-mono text-[9px] text-[#484F58]">MAX ±100</span>
+      </div>
+    </div><!-- end NFP card -->
+
+    <!-- ─ CPI CARD ───────────────────────────────────────────────── -->
+    <div id="cpiCard" class="macro-card bg-[#0D1117] border border-[#21262D] rounded-none">
+
+      <div class="flex items-center justify-between px-5 py-4 border-b border-[#21262D]">
+        <div class="flex items-center gap-3">
+          <div class="font-mono text-[10px] tracking-[0.2em] text-[#484F58] uppercase">02</div>
+          <div>
+            <div class="font-mono text-sm font-bold text-[#E6EDF3] tracking-wide">CPI PREDICTOR</div>
+            <div class="font-mono text-[10px] text-[#484F58]">Inflation Pressure — USD Sentiment</div>
+          </div>
+        </div>
+        <div class="font-mono text-[10px] text-[#484F58] uppercase tracking-wider">XAU/USD</div>
+      </div>
+
+      <!-- Signal banner -->
+      <div id="cpiSignalBanner" class="px-5 py-5 border-b border-[#21262D] bg-[#0D1117]">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <div class="font-mono text-[10px] text-[#484F58] uppercase tracking-widest mb-2">Final Signal</div>
+            <div id="cpiSignal" class="font-mono text-xl md:text-2xl font-bold text-[#484F58]">— AWAITING DATA —</div>
+          </div>
+          <div class="text-right">
+            <div class="font-mono text-[10px] text-[#484F58] uppercase tracking-widest mb-2">Score</div>
+            <div id="cpiScore" class="font-mono text-3xl font-bold text-[#484F58]">—</div>
+          </div>
+        </div>
+        <div class="mt-4">
+          <div class="flex justify-between font-mono text-[9px] text-[#484F58] mb-1">
+            <span>-100 (LOW INFLATION)</span><span>0</span><span>+100 (HIGH INFLATION)</span>
+          </div>
+          <div class="score-track">
+            <div id="cpiBar" class="score-fill w-1/2 bg-[#484F58]"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Components -->
+      <div class="divide-y divide-[#21262D]">
+
+        <!-- PPI Row -->
+        <div class="data-row px-5 py-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <div class="w-1 h-4 bg-[#484F58] rounded-full" id="ppiBar"></div>
+              <span class="font-mono text-xs font-semibold text-[#8B949E] uppercase tracking-wider">PPI (Producer Price Index)</span>
+            </div>
+            <div id="ppiPoints" class="font-mono text-xs font-bold text-[#484F58]">± 60 pts</div>
+          </div>
+          <div class="grid grid-cols-3 gap-2" id="ppiRow">
+            <div class="bg-[#161B22] px-3 py-2">
+              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Actual</div>
+              <div class="skeleton h-4 w-16"></div>
+            </div>
+            <div class="bg-[#161B22] px-3 py-2">
+              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Forecast</div>
+              <div class="skeleton h-4 w-16"></div>
+            </div>
+            <div class="bg-[#161B22] px-3 py-2">
+              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Status</div>
+              <div class="skeleton h-4 w-16"></div>
+            </div>
+          </div>
+          <div class="mt-1 font-mono text-[9px] text-[#484F58]" id="ppiDate"></div>
+        </div>
+
+        <!-- Crude Oil Row -->
+        <div class="data-row px-5 py-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <div class="w-1 h-4 bg-[#484F58] rounded-full" id="crudeBar"></div>
+              <span class="font-mono text-xs font-semibold text-[#8B949E] uppercase tracking-wider">WTI Crude Oil (CL=F)</span>
+            </div>
+            <div id="crudePoints" class="font-mono text-xs font-bold text-[#484F58]">± 40 pts</div>
+          </div>
+          <div class="grid grid-cols-3 gap-2" id="crudeRow">
+            <div class="bg-[#161B22] px-3 py-2">
+              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Current</div>
+              <div class="skeleton h-4 w-16"></div>
+            </div>
+            <div class="bg-[#161B22] px-3 py-2">
+              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">30-Day Avg</div>
+              <div class="skeleton h-4 w-16"></div>
+            </div>
+            <div class="bg-[#161B22] px-3 py-2">
+              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Status</div>
+              <div class="skeleton h-4 w-16"></div>
+            </div>
+          </div>
+          <div class="mt-1 font-mono text-[9px] text-[#484F58]">Source: Yahoo Finance (real-time)</div>
+        </div>
+
+        <!-- Spacer to match NFP card height -->
+        <div class="px-5 py-4 opacity-0 pointer-events-none select-none" aria-hidden="true">
+          <div class="mb-2 flex items-center gap-2">
+            <div class="w-1 h-4"></div>
+            <span class="text-xs">—</span>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <div class="bg-[#161B22] px-3 py-2"><div class="h-4 w-16"></div></div>
+            <div class="bg-[#161B22] px-3 py-2"><div class="h-4 w-16"></div></div>
+            <div class="bg-[#161B22] px-3 py-2"><div class="h-4 w-16"></div></div>
+          </div>
+        </div>
+
+      </div><!-- end components -->
+
+      <div class="px-5 py-3 bg-[#080B0F] border-t border-[#21262D] flex items-center justify-between">
+        <span class="font-mono text-[9px] text-[#484F58] uppercase tracking-widest">Score &gt; 40 → SELL XAU &nbsp;|&nbsp; Score &lt; -40 → BUY XAU</span>
+        <span class="font-mono text-[9px] text-[#484F58]">MAX ±100</span>
+      </div>
+    </div><!-- end CPI card -->
+
+  </main><!-- end main grid -->
+
+  <!-- ── Combined signal bar ───────────────────────────────────────── -->
+  <div class="max-w-6xl mx-auto px-6 pb-8">
+    <div id="combinedBanner" class="border border-[#21262D] bg-[#0D1117] p-5">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div class="font-mono text-[9px] text-[#484F58] uppercase tracking-[0.25em] mb-1">Composite XAU/USD Bias</div>
+          <div id="combinedSignal" class="font-mono text-base font-bold text-[#484F58]">Refresh to generate composite signal</div>
+        </div>
+        <div class="flex items-center gap-6 font-mono text-xs">
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 bg-[#00FF88]"></div>
+            <span class="text-[#484F58]">BUY XAU = USD weakness signal</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 bg-[#FF3B3B]"></div>
+            <span class="text-[#484F58]">SELL XAU = USD strength signal</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 bg-[#F0B429]"></div>
+            <span class="text-[#484F58]">WAIT = no clear edge</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Footer ────────────────────────────────────────────────────── -->
+  <footer class="border-t border-[#21262D] px-6 py-4">
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
+      <span class="font-mono text-[10px] text-[#484F58] tracking-widest uppercase">DEPRESSEDESIGN Macro Predictor — For research purposes only. Not financial advice.</span>
+      <span class="font-mono text-[10px] text-[#484F58]">Data: FMP + Yahoo Finance</span>
+    </div>
+  </footer>
+
+  <!-- ── Error toast ────────────────────────────────────────────────── -->
+  <div id="errorToast" class="fixed bottom-6 right-6 hidden border border-[#FF3B3B] bg-[#0D1117] px-4 py-3 max-w-sm z-50">
+    <div class="font-mono text-xs text-[#FF3B3B]" id="errorMsg">Error fetching data.</div>
+  </div>
+
+  <!-- ── Script ─────────────────────────────────────────────────────── -->
+  <script>
+    // ─── Signal classification helpers ─────────────────────────────
+    function classifySignal(signalStr) {
+      const s = (signalStr || '').toUpperCase();
+      if (s.includes('BUY')) return 'buy';
+      if (s.includes('SELL')) return 'sell';
+      return 'wait';
+    }
+
+    function signalColor(type) {
+      return { buy: '#00FF88', sell: '#FF3B3B', wait: '#F0B429' }[type] || '#8B949E';
+    }
+
+    function signalGlow(type) {
+      return { buy: 'glow-buy border-buy bg-buy-dim', sell: 'glow-sell border-sell bg-sell-dim', wait: 'glow-wait border-wait bg-wait-dim' }[type] || '';
+    }
+
+    // ─── Format numbers ─────────────────────────────────────────────
+    function fmt(val, unit = '') {
+      if (val === null || val === undefined) return 'N/A';
+      const n = parseFloat(val);
+      if (isNaN(n)) return String(val);
+      // Large numbers (employment in thousands/millions)
+      if (Math.abs(n) >= 1000) return n.toLocaleString('en-US', { maximumFractionDigits: 0 }) + unit;
+      return n.toFixed(2) + unit;
+    }
+
+    // ─── Score bar ──────────────────────────────────────────────────
+    function updateScoreBar(barId, score, type) {
+      const bar = document.getElementById(barId);
+      if (!bar) return;
+      // Map -100..100 → 0..100% width, with midpoint at 50%
+      const pct = ((score + 100) / 200) * 100;
+      bar.style.width = pct + '%';
+      bar.style.background = signalColor(type);
+      bar.style.boxShadow = type === 'buy'
+        ? '0 0 8px rgba(0,255,136,0.6)'
+        : type === 'sell'
+        ? '0 0 8px rgba(255,59,59,0.6)'
+        : '0 0 8px rgba(240,180,41,0.6)';
+    }
+
+    // ─── Render a 3-cell row ─────────────────────────────────────────
+    function renderRow(id, col1, col2, col3, labels) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = [
+        { label: labels[0], value: col1 },
+        { label: labels[1], value: col2 },
+        { label: labels[2], value: col3 },
+      ].map(({ label, value }) => `
+        <div class="bg-[#161B22] px-3 py-2">
+          <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">${label}</div>
+          <div class="font-mono text-xs font-semibold text-[#E6EDF3]">${value}</div>
+        </div>`).join('');
+    }
+
+    // ─── Color accent bar ────────────────────────────────────────────
+    function setAccentBar(id, points) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.style.background = points > 0 ? '#00FF88' : points < 0 ? '#FF3B3B' : '#484F58';
+      el.style.boxShadow = points > 0
+        ? '0 0 6px rgba(0,255,136,0.8)'
+        : points < 0 ? '0 0 6px rgba(255,59,59,0.8)' : 'none';
+    }
+
+    // ─── Render NFP card ─────────────────────────────────────────────
+    function renderNFP(nfp) {
+      const type = classifySignal(nfp.signal);
+      const color = signalColor(type);
+
+      // Signal text
+      document.getElementById('nfpSignal').textContent = nfp.signal;
+      document.getElementById('nfpSignal').style.color = color;
+      document.getElementById('nfpScore').textContent = (nfp.score > 0 ? '+' : '') + nfp.score;
+      document.getElementById('nfpScore').style.color = color;
+
+      // Card border glow
+      const card = document.getElementById('nfpCard');
+      card.className = `macro-card bg-[#0D1117] border rounded-none ${signalGlow(type)}`;
+
+      // Banner bg
+      const banner = document.getElementById('nfpSignalBanner');
+      banner.className = `px-5 py-5 border-b border-[#21262D] ${type === 'buy' ? 'bg-buy-dim' : type === 'sell' ? 'bg-sell-dim' : 'bg-wait-dim'}`;
+
+      updateScoreBar('nfpBar', nfp.score, type);
+
+      // ADP
+      const adp = nfp.components.adp;
+      setAccentBar('adpBar', adp.points);
+      document.getElementById('adpPoints').textContent = (adp.points > 0 ? '+' : '') + adp.points + ' pts';
+      document.getElementById('adpPoints').style.color = adp.points > 0 ? '#00FF88' : adp.points < 0 ? '#FF3B3B' : '#484F58';
+      renderRow('adpRow',
+        fmt(adp.actual, 'K'),
+        fmt(adp.estimate, 'K'),
+        adp.status,
+        ['Actual', 'Forecast', 'Status']
+      );
+      document.getElementById('adpDate').textContent = adp.date ? 'Data date: ' + adp.date : '';
+
+      // ISM
+      const ism = nfp.components.ism;
+      setAccentBar('ismBar', ism.points);
+      document.getElementById('ismPoints').textContent = (ism.points > 0 ? '+' : '') + ism.points + ' pts';
+      document.getElementById('ismPoints').style.color = ism.points > 0 ? '#00FF88' : ism.points < 0 ? '#FF3B3B' : '#484F58';
+      renderRow('ismRow',
+        fmt(ism.actual),
+        '50.0',
+        ism.status,
+        ['Actual', 'Threshold', 'Status']
+      );
+      document.getElementById('ismDate').textContent = ism.date ? 'Data date: ' + ism.date : '';
+
+      // JOLTs
+      const jolts = nfp.components.jolts;
+      setAccentBar('joltsBar', jolts.points);
+      document.getElementById('joltsPoints').textContent = (jolts.points > 0 ? '+' : '') + jolts.points + ' pts';
+      document.getElementById('joltsPoints').style.color = jolts.points > 0 ? '#00FF88' : jolts.points < 0 ? '#FF3B3B' : '#484F58';
+      renderRow('joltsRow',
+        fmt(jolts.actual, 'M'),
+        fmt(jolts.estimate, 'M'),
+        jolts.status,
+        ['Actual', 'Forecast', 'Status']
+      );
+      document.getElementById('joltsDate').textContent = jolts.date ? 'Data date: ' + jolts.date : '';
+    }
+
+    // ─── Render CPI card ─────────────────────────────────────────────
+    function renderCPI(cpi) {
+      const type = classifySignal(cpi.signal);
+      const color = signalColor(type);
+
+      document.getElementById('cpiSignal').textContent = cpi.signal;
+      document.getElementById('cpiSignal').style.color = color;
+      document.getElementById('cpiScore').textContent = (cpi.score > 0 ? '+' : '') + cpi.score;
+      document.getElementById('cpiScore').style.color = color;
+
+      const card = document.getElementById('cpiCard');
+      card.className = `macro-card bg-[#0D1117] border rounded-none ${signalGlow(type)}`;
+
+      const banner = document.getElementById('cpiSignalBanner');
+      banner.className = `px-5 py-5 border-b border-[#21262D] ${type === 'buy' ? 'bg-buy-dim' : type === 'sell' ? 'bg-sell-dim' : 'bg-wait-dim'}`;
+
+      updateScoreBar('cpiBar', cpi.score, type);
+
+      // PPI
+      const ppi = cpi.components.ppi;
+      setAccentBar('ppiBar', ppi.points);
+      document.getElementById('ppiPoints').textContent = (ppi.points > 0 ? '+' : '') + ppi.points + ' pts';
+      document.getElementById('ppiPoints').style.color = ppi.points > 0 ? '#00FF88' : ppi.points < 0 ? '#FF3B3B' : '#484F58';
+      renderRow('ppiRow',
+        fmt(ppi.actual, '%'),
+        fmt(ppi.estimate, '%'),
+        ppi.status,
+        ['Actual', 'Forecast', 'Status']
+      );
+      document.getElementById('ppiDate').textContent = ppi.date ? 'Data date: ' + ppi.date : '';
+
+      // Crude Oil
+      const crude = cpi.components.crude;
+      setAccentBar('crudeBar', crude.points);
+      document.getElementById('crudePoints').textContent = (crude.points > 0 ? '+' : '') + crude.points + ' pts';
+      document.getElementById('crudePoints').style.color = crude.points > 0 ? '#00FF88' : crude.points < 0 ? '#FF3B3B' : '#484F58';
+      renderRow('crudeRow',
+        crude.current !== null ? '$' + crude.current : 'N/A',
+        crude.avg30 !== null ? '$' + crude.avg30 : 'N/A',
+        crude.status,
+        ['Current', '30-Day Avg', 'Status']
+      );
+    }
+
+    // ─── Combined signal ─────────────────────────────────────────────
+    function renderCombined(nfp, cpi) {
+      const nfpType = classifySignal(nfp.signal);
+      const cpiType = classifySignal(cpi.signal);
+      const banner = document.getElementById('combinedBanner');
+      const label = document.getElementById('combinedSignal');
+
+      let combined, type;
+      if (nfpType === 'buy' && cpiType === 'buy') {
+        combined = '⬆ STRONG BUY XAU — Both NFP & CPI favor USD weakness';
+        type = 'buy';
+      } else if (nfpType === 'sell' && cpiType === 'sell') {
+        combined = '⬇ STRONG SELL XAU — Both NFP & CPI favor USD strength';
+        type = 'sell';
+      } else if (nfpType === 'buy' || cpiType === 'buy') {
+        combined = '⬆ LEAN BUY XAU — One leg favors USD weakness';
+        type = 'buy';
+      } else if (nfpType === 'sell' || cpiType === 'sell') {
+        combined = '⬇ LEAN SELL XAU — One leg favors USD strength';
+        type = 'sell';
+      } else {
+        combined = '— WAIT & SEE — No clear directional edge from either predictor';
+        type = 'wait';
+      }
+
+      label.textContent = combined;
+      label.style.color = signalColor(type);
+      banner.className = `border bg-[#0D1117] p-5 ${signalGlow(type)}`;
+    }
+
+    // ─── Main load function ──────────────────────────────────────────
+    async function loadData() {
+      const btn = document.getElementById('refreshBtn');
+      const icon = document.getElementById('refreshIcon');
+      const statusEl = document.getElementById('lastUpdate');
+
+      btn.disabled = true;
+      icon.classList.add('spinning');
+      statusEl.textContent = 'FETCHING...';
+
+      document.getElementById('errorToast').classList.add('hidden');
+
+      try {
+        const res = await fetch('/api/predict');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        if (!data.success) throw new Error(data.error || 'Unknown error');
+
+        renderNFP(data.nfp);
+        renderCPI(data.cpi);
+        renderCombined(data.nfp, data.cpi);
+
+        const ts = new Date(data.timestamp);
+        statusEl.textContent = 'UPDATED ' + ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById('errorMsg').textContent = 'Error: ' + err.message;
+        document.getElementById('errorToast').classList.remove('hidden');
+        statusEl.textContent = 'FETCH FAILED';
+
+        // Auto-hide toast
+        setTimeout(() => document.getElementById('errorToast').classList.add('hidden'), 5000);
+      } finally {
+        btn.disabled = false;
+        icon.classList.remove('spinning');
+      }
+    }
+
+    // Auto-load on page open
+    document.addEventListener('DOMContentLoaded', loadData);
+  </script>
+</body>
+</html>
