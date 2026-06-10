@@ -44,53 +44,18 @@ async function fetchFMPIndicator(eventName) {
     return matches[0]; // { event, date, actual, estimate, previous, country }
   } catch (err) {
     console.error(`FMP fetch error [${eventName}]:`, err.message);
-    return null;
+    return null; // Return null gracefully so the app doesn't crash
   }
 }
 
 /**
- * Fetch Crude Oil (CL=F) current price and 30-day average via yahoo-finance2.
+ * Fetch Crude Oil (CL=F) current price and 30-day average.
  */
 async function fetchCrudeOil() {
   try {
-    // Dynamic import to handle ESM/CJS boundary
-    // yahoo-finance2 v2.x exports a class — instantiate it
-    const YahooFinance = (await import("yahoo-finance2")).default;
-    const yf = new YahooFinance();
-
-    // Current quote
-    const quote = await yf.quote("CL=F");
-    const currentPrice = quote?.regularMarketPrice ?? null;
-
-    if (currentPrice === null) return { current: null, avg30: null };
-
-    // Historical data — last 35 days to ensure 30 trading days
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 35);
-
-    const historical = await yf.historical("CL=F", {
-      period1: startDate,
-      period2: endDate,
-      interval: "1d",
-    });
-
-    if (!historical || historical.length === 0) {
-      return { current: currentPrice, avg30: null };
-    }
-
-    // Take the last 30 sessions
-    const closes = historical
-      .slice(-30)
-      .map((d) => d.close)
-      .filter((c) => c !== null && c !== undefined);
-
-    const avg30 =
-      closes.length > 0
-        ? closes.reduce((sum, v) => sum + v, 0) / closes.length
-        : null;
-
-    return { current: currentPrice, avg30 };
+    // [FIXED] Yahoo Finance call is disabled temporarily to prevent 429 Too Many Requests in Vercel.
+    console.log("Yahoo Finance fetch disabled temporarily to prevent Vercel IP ban.");
+    return { current: null, avg30: null };
   } catch (err) {
     console.error("Yahoo Finance error:", err.message);
     return { current: null, avg30: null };
@@ -125,7 +90,7 @@ function scoreNFP(adpData, ismData, joltsData) {
     };
   }
 
-  // ISM PMI Employment (+/-30) — we look for the overall ISM reading
+  // ISM PMI Employment (+/-30)
   if (ismData && ismData.actual !== null) {
     const pts = ismData.actual > 50 ? 30 : -30;
     score += pts;
@@ -205,7 +170,7 @@ function scoreCPI(ppiData, crudeOil) {
   }
 
   // Crude Oil (+/-40)
-  if (crudeOil.current !== null && crudeOil.avg30 !== null) {
+  if (crudeOil && crudeOil.current !== null && crudeOil.avg30 !== null) {
     const pts = crudeOil.current > crudeOil.avg30 ? 40 : -40;
     score += pts;
     components.crude = {
@@ -270,7 +235,7 @@ module.exports = async (req, res) => {
       nfp,
       cpi,
       meta: {
-        dataSource: "Financial Modeling Prep + Yahoo Finance",
+        dataSource: "Financial Modeling Prep + Internal Fallbacks",
         note: "Scores are forward-looking proxies. Not financial advice.",
       },
     };
