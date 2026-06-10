@@ -19,57 +19,37 @@
           },
           colors: {
             bg: {
-              base: '#080B0F',
-              card: '#0D1117',
-              elevated: '#161B22',
-              border: '#21262D',
+              base:    '#080B0F',
+              card:    '#0D1117',
+              elevated:'#161B22',
+              border:  '#21262D',
             },
             signal: {
-              buy: '#00FF88',
-              sell: '#FF3B3B',
-              wait: '#F0B429',
-              buyDim: 'rgba(0,255,136,0.08)',
-              sellDim: 'rgba(255,59,59,0.08)',
-              waitDim: 'rgba(240,180,41,0.08)',
+              buy:     '#00FF88',
+              sell:    '#FF3B3B',
+              wait:    '#F0B429',
             },
             ink: {
-              primary: '#E6EDF3',
+              primary:   '#E6EDF3',
               secondary: '#8B949E',
-              muted: '#484F58',
+              muted:     '#484F58',
             }
           },
-          animation: {
-            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-            'scan': 'scan 2s linear infinite',
-          },
-          keyframes: {
-            scan: {
-              '0%': { transform: 'translateY(-100%)' },
-              '100%': { transform: 'translateY(100vh)' }
-            }
-          }
         }
       }
     }
   </script>
 
   <style>
+    /* ── Base ────────────────────────────────────────────────────────── */
     body { background-color: #080B0F; font-family: 'Inter', sans-serif; }
 
-    /* Scanline overlay */
+    /* CRT scanline */
     body::before {
       content: '';
-      position: fixed;
-      inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,0.04) 2px,
-        rgba(0,0,0,0.04) 4px
-      );
-      pointer-events: none;
-      z-index: 1000;
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px);
+      pointer-events: none; z-index: 1000;
     }
 
     /* Grid background */
@@ -80,124 +60,112 @@
       background-size: 48px 48px;
     }
 
-    /* Neon glow effects */
+    /* ── Signal colours ───────────────────────────────────────────────── */
     .glow-buy  { box-shadow: 0 0 20px rgba(0,255,136,0.15), 0 0 40px rgba(0,255,136,0.05); }
     .glow-sell { box-shadow: 0 0 20px rgba(255,59,59,0.15),  0 0 40px rgba(255,59,59,0.05); }
     .glow-wait { box-shadow: 0 0 20px rgba(240,180,41,0.15), 0 0 40px rgba(240,180,41,0.05); }
 
-    .signal-buy  { color: #00FF88; }
-    .signal-sell { color: #FF3B3B; }
-    .signal-wait { color: #F0B429; }
-
-    .border-buy  { border-color: rgba(0,255,136,0.4); }
-    .border-sell { border-color: rgba(255,59,59,0.4); }
-    .border-wait { border-color: rgba(240,180,41,0.4); }
+    .border-buy  { border-color: rgba(0,255,136,0.4) !important; }
+    .border-sell { border-color: rgba(255,59,59,0.4)  !important; }
+    .border-wait { border-color: rgba(240,180,41,0.4) !important; }
 
     .bg-buy-dim  { background-color: rgba(0,255,136,0.06); }
     .bg-sell-dim { background-color: rgba(255,59,59,0.06); }
     .bg-wait-dim { background-color: rgba(240,180,41,0.06); }
 
-    /* Score bar */
+    /* ── Score bar ────────────────────────────────────────────────────── */
     .score-track {
-      background: #161B22;
-      border-radius: 2px;
-      height: 6px;
-      overflow: hidden;
-      position: relative;
+      background: #161B22; border-radius: 2px; height: 6px;
+      overflow: hidden; position: relative;
     }
     .score-fill {
-      height: 100%;
-      border-radius: 2px;
-      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      height: 100%; border-radius: 2px;
+      transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
     }
 
-    /* Ticker tape */
-    @keyframes ticker {
-      0%   { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
+    /* ── Master score bar (wider range ±400) ──────────────────────────── */
+    .master-track {
+      background: #0D1117; height: 8px; border-radius: 2px;
+      overflow: hidden; position: relative;
+      border: 1px solid #21262D;
     }
-    .ticker-inner {
-      display: flex;
-      white-space: nowrap;
-      animation: ticker 30s linear infinite;
+    .master-fill {
+      height: 100%; border-radius: 2px;
+      transition: width 1s cubic-bezier(0.4,0,0.2,1);
     }
 
-    /* Blinking cursor */
-    @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
-    .cursor { animation: blink 1s step-start infinite; }
+    /* ── Ticker ───────────────────────────────────────────────────────── */
+    @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    .ticker-inner { display: flex; white-space: nowrap; animation: ticker 40s linear infinite; }
 
-    /* Refresh spin */
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .spinning { animation: spin 0.8s linear infinite; }
+    /* ── Misc ─────────────────────────────────────────────────────────── */
+    @keyframes blink      { 0%,100% { opacity:1; } 50% { opacity:0; } }
+    @keyframes spin       { to { transform: rotate(360deg); } }
+    @keyframes statusPulse{ 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:.5; transform:scale(.8); } }
+    @keyframes shimmer    { 0%{ background-position:-600px 0; } 100%{ background-position:600px 0; } }
+    @keyframes newsSlide  { from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:translateY(0); } }
 
-    /* Card hover */
+    .cursor     { animation: blink 1s step-start infinite; }
+    .spinning   { animation: spin 0.8s linear infinite; }
+    .status-dot { animation: statusPulse 2s ease-in-out infinite; }
     .macro-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
     .macro-card:hover { transform: translateY(-2px); }
-
-    /* Status dot */
-    @keyframes statusPulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%       { opacity: 0.5; transform: scale(0.8); }
-    }
-    .status-dot { animation: statusPulse 2s ease-in-out infinite; }
-
-    /* Row hover */
-    .data-row { transition: background 0.15s ease; }
+    .data-row   { transition: background 0.15s ease; }
     .data-row:hover { background: rgba(255,255,255,0.03); }
-
-    /* Loading skeleton */
-    @keyframes shimmer {
-      0%   { background-position: -600px 0; }
-      100% { background-position: 600px 0; }
-    }
     .skeleton {
       background: linear-gradient(90deg, #161B22 25%, #1E242C 50%, #161B22 75%);
-      background-size: 600px 100%;
-      animation: shimmer 1.4s infinite;
-      border-radius: 4px;
+      background-size: 600px 100%; animation: shimmer 1.4s infinite; border-radius: 4px;
+    }
+    .news-item  { animation: newsSlide 0.3s ease forwards; }
+
+    /* ── News radar ───────────────────────────────────────────────────── */
+    .news-grid  { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1px; }
+    .news-pill  {
+      border-left: 2px solid #21262D;
+      transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .news-pill:hover { background: rgba(255,255,255,0.02); }
+    .news-pill.impact-high   { border-left-color: #FF3B3B; }
+    .news-pill.impact-medium { border-left-color: #F0B429; }
+    .news-pill.impact-low    { border-left-color: #484F58; }
+
+    /* ── Countdown badge ──────────────────────────────────────────────── */
+    .countdown-badge {
+      font-variant-numeric: tabular-nums;
     }
   </style>
 </head>
 
 <body class="min-h-screen text-[#E6EDF3] grid-bg">
 
-  <!-- ── Ticker tape ───────────────────────────────────────────────── -->
+  <!-- ── Ticker ─────────────────────────────────────────────────────── -->
   <div class="overflow-hidden bg-[#0D1117] border-b border-[#21262D] h-8 flex items-center">
     <div class="ticker-inner font-mono text-xs text-[#484F58]">
-      <span class="px-8">DEPRESSEDESIGN MACRO PREDICTOR &nbsp;·&nbsp; FOREX &amp; XAU/USD SIGNALS &nbsp;·&nbsp; NFP PREDICTOR &nbsp;·&nbsp; CPI PREDICTOR &nbsp;·&nbsp; ADP &nbsp;·&nbsp; JOLTS &nbsp;·&nbsp; ISM PMI &nbsp;·&nbsp; PPI &nbsp;·&nbsp; WTI CRUDE OIL &nbsp;·&nbsp; NOT FINANCIAL ADVICE &nbsp;·&nbsp;</span>
-      <span class="px-8">DEPRESSEDESIGN MACRO PREDICTOR &nbsp;·&nbsp; FOREX &amp; XAU/USD SIGNALS &nbsp;·&nbsp; NFP PREDICTOR &nbsp;·&nbsp; CPI PREDICTOR &nbsp;·&nbsp; ADP &nbsp;·&nbsp; JOLTS &nbsp;·&nbsp; ISM PMI &nbsp;·&nbsp; PPI &nbsp;·&nbsp; WTI CRUDE OIL &nbsp;·&nbsp; NOT FINANCIAL ADVICE &nbsp;·&nbsp;</span>
+      <span class="px-8">DEPRESSEDESIGN MACRO PREDICTOR &nbsp;·&nbsp; FOREX &amp; XAU/USD SIGNALS &nbsp;·&nbsp; NFP &nbsp;·&nbsp; CPI &nbsp;·&nbsp; GDP GROWTH &nbsp;·&nbsp; FED RATE &nbsp;·&nbsp; ADP &nbsp;·&nbsp; JOLTS &nbsp;·&nbsp; ISM PMI &nbsp;·&nbsp; PPI &nbsp;·&nbsp; RETAIL SALES &nbsp;·&nbsp; WTI CRUDE &nbsp;·&nbsp; NOT FINANCIAL ADVICE &nbsp;·&nbsp;</span>
+      <span class="px-8">DEPRESSEDESIGN MACRO PREDICTOR &nbsp;·&nbsp; FOREX &amp; XAU/USD SIGNALS &nbsp;·&nbsp; NFP &nbsp;·&nbsp; CPI &nbsp;·&nbsp; GDP GROWTH &nbsp;·&nbsp; FED RATE &nbsp;·&nbsp; ADP &nbsp;·&nbsp; JOLTS &nbsp;·&nbsp; ISM PMI &nbsp;·&nbsp; PPI &nbsp;·&nbsp; RETAIL SALES &nbsp;·&nbsp; WTI CRUDE &nbsp;·&nbsp; NOT FINANCIAL ADVICE &nbsp;·&nbsp;</span>
     </div>
   </div>
 
-  <!-- ── Header ────────────────────────────────────────────────────── -->
+  <!-- ── Header ─────────────────────────────────────────────────────── -->
   <header class="border-b border-[#21262D] px-6 py-4">
-    <div class="max-w-6xl mx-auto flex items-center justify-between gap-4 flex-wrap">
-
+    <div class="max-w-[1400px] mx-auto flex items-center justify-between gap-4 flex-wrap">
       <div class="flex items-center gap-4">
-        <!-- Logo mark -->
         <div class="w-9 h-9 border border-[#00FF88] flex items-center justify-center relative">
           <div class="w-2 h-2 bg-[#00FF88]"></div>
           <div class="absolute inset-0 bg-[#00FF88] opacity-5"></div>
         </div>
         <div>
           <div class="font-mono text-sm font-bold tracking-[0.15em] text-[#E6EDF3] uppercase">DEPRESSEDESIGN</div>
-          <div class="font-mono text-[10px] text-[#484F58] tracking-[0.2em] uppercase">Macro Predictor v2.0</div>
+          <div class="font-mono text-[10px] text-[#484F58] tracking-[0.2em] uppercase">Macro Predictor v3.0 &nbsp;·&nbsp; 4-Predictor Engine</div>
         </div>
       </div>
-
       <div class="flex items-center gap-6">
-        <!-- Live indicator -->
         <div class="flex items-center gap-2">
           <div class="w-2 h-2 rounded-full bg-[#00FF88] status-dot"></div>
           <span class="font-mono text-xs text-[#8B949E]" id="lastUpdate">READY</span>
         </div>
-
-        <!-- Refresh button -->
-        <button
-          id="refreshBtn"
-          onclick="loadData()"
-          class="flex items-center gap-2 px-4 py-2 border border-[#21262D] bg-[#0D1117] hover:border-[#00FF88] hover:text-[#00FF88] font-mono text-xs tracking-widest uppercase transition-all duration-200 active:scale-95"
-        >
+        <button id="refreshBtn" onclick="loadData()"
+          class="flex items-center gap-2 px-4 py-2 border border-[#21262D] bg-[#0D1117] hover:border-[#00FF88] hover:text-[#00FF88] font-mono text-xs tracking-widest uppercase transition-all duration-200 active:scale-95">
           <svg id="refreshIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
           </svg>
@@ -207,308 +175,515 @@
     </div>
   </header>
 
-  <!-- ── Hero banner ───────────────────────────────────────────────── -->
-  <div class="max-w-6xl mx-auto px-6 pt-8 pb-2">
-    <div class="flex items-end gap-3 mb-1">
-      <h1 class="font-mono text-2xl md:text-3xl font-bold tracking-tight text-[#E6EDF3]">
-        MACRO SENTIMENT<span class="cursor text-[#00FF88]">_</span>
-      </h1>
-    </div>
-    <p class="font-sans text-sm text-[#8B949E] max-w-xl">
-      Leading indicator composite scores predicting NFP &amp; CPI outcomes — and their directional impact on XAU/USD.
+  <!-- ── Hero ───────────────────────────────────────────────────────── -->
+  <div class="max-w-[1400px] mx-auto px-6 pt-8 pb-4">
+    <h1 class="font-mono text-2xl md:text-3xl font-bold tracking-tight text-[#E6EDF3] mb-1">
+      MACRO SENTIMENT<span class="cursor text-[#00FF88]">_</span>
+    </h1>
+    <p class="font-sans text-sm text-[#8B949E] max-w-2xl">
+      4-predictor composite engine. Threshold ±20 per card. Master signal fires at ±40 composite. Directional bias for XAU/USD.
     </p>
   </div>
 
-  <!-- ── Main grid ─────────────────────────────────────────────────── -->
-  <main class="max-w-6xl mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <!-- ══════════════════════════════════════════════════════════════════
+       MASTER SIGNAL BANNER  (above the 4-card grid)
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div class="max-w-[1400px] mx-auto px-6 pb-6">
+    <div id="masterBanner" class="border border-[#21262D] bg-[#0D1117] p-5 relative overflow-hidden">
 
-    <!-- ─ NFP CARD ───────────────────────────────────────────────── -->
-    <div id="nfpCard" class="macro-card bg-[#0D1117] border border-[#21262D] rounded-none">
-
-      <!-- Card header -->
-      <div class="flex items-center justify-between px-5 py-4 border-b border-[#21262D]">
-        <div class="flex items-center gap-3">
-          <div class="font-mono text-[10px] tracking-[0.2em] text-[#484F58] uppercase">01</div>
-          <div>
-            <div class="font-mono text-sm font-bold text-[#E6EDF3] tracking-wide">NFP PREDICTOR</div>
-            <div class="font-mono text-[10px] text-[#484F58]">Nonfarm Payrolls — USD Sentiment</div>
-          </div>
-        </div>
-        <div class="font-mono text-[10px] text-[#484F58] uppercase tracking-wider">XAU/USD</div>
+      <!-- Background label -->
+      <div class="absolute inset-0 flex items-center justify-end pr-6 pointer-events-none select-none">
+        <span class="font-mono text-[80px] font-bold leading-none text-[#0D1117] opacity-60 tracking-tighter" id="masterBgLabel" style="text-shadow: 0 0 60px rgba(255,255,255,0.03);">MASTER</span>
       </div>
 
-      <!-- Signal banner -->
-      <div id="nfpSignalBanner" class="px-5 py-5 border-b border-[#21262D] bg-[#0D1117]">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <div class="font-mono text-[10px] text-[#484F58] uppercase tracking-widest mb-2">Final Signal</div>
-            <div id="nfpSignal" class="font-mono text-xl md:text-2xl font-bold text-[#484F58]">— AWAITING DATA —</div>
-          </div>
-          <div class="text-right">
-            <div class="font-mono text-[10px] text-[#484F58] uppercase tracking-widest mb-2">Score</div>
-            <div id="nfpScore" class="font-mono text-3xl font-bold text-[#484F58]">—</div>
-          </div>
-        </div>
-        <!-- Score bar -->
-        <div class="mt-4">
-          <div class="flex justify-between font-mono text-[9px] text-[#484F58] mb-1">
-            <span>-100 (BAD USD)</span><span>0</span><span>+100 (GOOD USD)</span>
-          </div>
-          <div class="score-track">
-            <div id="nfpBar" class="score-fill w-1/2 bg-[#484F58]"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Components -->
-      <div class="divide-y divide-[#21262D]">
-
-        <!-- ADP Row -->
-        <div class="data-row px-5 py-4">
-          <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center gap-2">
-              <div class="w-1 h-4 bg-[#484F58] rounded-full" id="adpBar"></div>
-              <span class="font-mono text-xs font-semibold text-[#8B949E] uppercase tracking-wider">ADP Nonfarm</span>
-            </div>
-            <div id="adpPoints" class="font-mono text-xs font-bold text-[#484F58]">± 50 pts</div>
-          </div>
-          <div class="grid grid-cols-3 gap-2" id="adpRow">
-            <div class="bg-[#161B22] px-3 py-2">
-              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Actual</div>
-              <div class="skeleton h-4 w-16"></div>
-            </div>
-            <div class="bg-[#161B22] px-3 py-2">
-              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Forecast</div>
-              <div class="skeleton h-4 w-16"></div>
-            </div>
-            <div class="bg-[#161B22] px-3 py-2">
-              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Status</div>
-              <div class="skeleton h-4 w-16"></div>
-            </div>
-          </div>
-          <div class="mt-1 font-mono text-[9px] text-[#484F58]" id="adpDate"></div>
-        </div>
-
-        <!-- ISM Row -->
-        <div class="data-row px-5 py-4">
-          <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center gap-2">
-              <div class="w-1 h-4 bg-[#484F58] rounded-full" id="ismBar"></div>
-              <span class="font-mono text-xs font-semibold text-[#8B949E] uppercase tracking-wider">ISM Manufacturing PMI</span>
-            </div>
-            <div id="ismPoints" class="font-mono text-xs font-bold text-[#484F58]">± 30 pts</div>
-          </div>
-          <div class="grid grid-cols-3 gap-2" id="ismRow">
-            <div class="bg-[#161B22] px-3 py-2">
-              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Actual</div>
-              <div class="skeleton h-4 w-16"></div>
-            </div>
-            <div class="bg-[#161B22] px-3 py-2">
-              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Threshold</div>
-              <div class="skeleton h-4 w-16"></div>
-            </div>
-            <div class="bg-[#161B22] px-3 py-2">
-              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Status</div>
-              <div class="skeleton h-4 w-16"></div>
-            </div>
-          </div>
-          <div class="mt-1 font-mono text-[9px] text-[#484F58]" id="ismDate"></div>
-        </div>
-
-        <!-- JOLTs Row -->
-        <div class="data-row px-5 py-4">
-          <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center gap-2">
-              <div class="w-1 h-4 bg-[#484F58] rounded-full" id="joltsBar"></div>
-              <span class="font-mono text-xs font-semibold text-[#8B949E] uppercase tracking-wider">JOLTs Job Openings</span>
-            </div>
-            <div id="joltsPoints" class="font-mono text-xs font-bold text-[#484F58]">± 20 pts</div>
-          </div>
-          <div class="grid grid-cols-3 gap-2" id="joltsRow">
-            <div class="bg-[#161B22] px-3 py-2">
-              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Actual</div>
-              <div class="skeleton h-4 w-16"></div>
-            </div>
-            <div class="bg-[#161B22] px-3 py-2">
-              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Forecast</div>
-              <div class="skeleton h-4 w-16"></div>
-            </div>
-            <div class="bg-[#161B22] px-3 py-2">
-              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Status</div>
-              <div class="skeleton h-4 w-16"></div>
-            </div>
-          </div>
-          <div class="mt-1 font-mono text-[9px] text-[#484F58]" id="joltsDate"></div>
-        </div>
-
-      </div><!-- end components -->
-
-      <!-- Card footer -->
-      <div class="px-5 py-3 bg-[#080B0F] border-t border-[#21262D] flex items-center justify-between">
-        <span class="font-mono text-[9px] text-[#484F58] uppercase tracking-widest">Score &gt; 40 → SELL XAU &nbsp;|&nbsp; Score &lt; -40 → BUY XAU</span>
-        <span class="font-mono text-[9px] text-[#484F58]">MAX ±100</span>
-      </div>
-    </div><!-- end NFP card -->
-
-    <!-- ─ CPI CARD ───────────────────────────────────────────────── -->
-    <div id="cpiCard" class="macro-card bg-[#0D1117] border border-[#21262D] rounded-none">
-
-      <div class="flex items-center justify-between px-5 py-4 border-b border-[#21262D]">
-        <div class="flex items-center gap-3">
-          <div class="font-mono text-[10px] tracking-[0.2em] text-[#484F58] uppercase">02</div>
-          <div>
-            <div class="font-mono text-sm font-bold text-[#E6EDF3] tracking-wide">CPI PREDICTOR</div>
-            <div class="font-mono text-[10px] text-[#484F58]">Inflation Pressure — USD Sentiment</div>
-          </div>
-        </div>
-        <div class="font-mono text-[10px] text-[#484F58] uppercase tracking-wider">XAU/USD</div>
-      </div>
-
-      <!-- Signal banner -->
-      <div id="cpiSignalBanner" class="px-5 py-5 border-b border-[#21262D] bg-[#0D1117]">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <div class="font-mono text-[10px] text-[#484F58] uppercase tracking-widest mb-2">Final Signal</div>
-            <div id="cpiSignal" class="font-mono text-xl md:text-2xl font-bold text-[#484F58]">— AWAITING DATA —</div>
-          </div>
-          <div class="text-right">
-            <div class="font-mono text-[10px] text-[#484F58] uppercase tracking-widest mb-2">Score</div>
-            <div id="cpiScore" class="font-mono text-3xl font-bold text-[#484F58]">—</div>
-          </div>
-        </div>
-        <div class="mt-4">
-          <div class="flex justify-between font-mono text-[9px] text-[#484F58] mb-1">
-            <span>-100 (LOW INFLATION)</span><span>0</span><span>+100 (HIGH INFLATION)</span>
-          </div>
-          <div class="score-track">
-            <div id="cpiBar" class="score-fill w-1/2 bg-[#484F58]"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Components -->
-      <div class="divide-y divide-[#21262D]">
-
-        <!-- PPI Row -->
-        <div class="data-row px-5 py-4">
-          <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center gap-2">
-              <div class="w-1 h-4 bg-[#484F58] rounded-full" id="ppiBar"></div>
-              <span class="font-mono text-xs font-semibold text-[#8B949E] uppercase tracking-wider">PPI (Producer Price Index)</span>
-            </div>
-            <div id="ppiPoints" class="font-mono text-xs font-bold text-[#484F58]">± 60 pts</div>
-          </div>
-          <div class="grid grid-cols-3 gap-2" id="ppiRow">
-            <div class="bg-[#161B22] px-3 py-2">
-              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Actual</div>
-              <div class="skeleton h-4 w-16"></div>
-            </div>
-            <div class="bg-[#161B22] px-3 py-2">
-              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Forecast</div>
-              <div class="skeleton h-4 w-16"></div>
-            </div>
-            <div class="bg-[#161B22] px-3 py-2">
-              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Status</div>
-              <div class="skeleton h-4 w-16"></div>
-            </div>
-          </div>
-          <div class="mt-1 font-mono text-[9px] text-[#484F58]" id="ppiDate"></div>
-        </div>
-
-        <!-- Crude Oil Row -->
-        <div class="data-row px-5 py-4">
-          <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center gap-2">
-              <div class="w-1 h-4 bg-[#484F58] rounded-full" id="crudeBar"></div>
-              <span class="font-mono text-xs font-semibold text-[#8B949E] uppercase tracking-wider">WTI Crude Oil (CL=F)</span>
-            </div>
-            <div id="crudePoints" class="font-mono text-xs font-bold text-[#484F58]">± 40 pts</div>
-          </div>
-          <div class="grid grid-cols-3 gap-2" id="crudeRow">
-            <div class="bg-[#161B22] px-3 py-2">
-              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Current</div>
-              <div class="skeleton h-4 w-16"></div>
-            </div>
-            <div class="bg-[#161B22] px-3 py-2">
-              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">30-Day Avg</div>
-              <div class="skeleton h-4 w-16"></div>
-            </div>
-            <div class="bg-[#161B22] px-3 py-2">
-              <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">Status</div>
-              <div class="skeleton h-4 w-16"></div>
-            </div>
-          </div>
-          <div class="mt-1 font-mono text-[9px] text-[#484F58]">Source: Yahoo Finance (real-time)</div>
-        </div>
-
-        <!-- Spacer to match NFP card height -->
-        <div class="px-5 py-4 opacity-0 pointer-events-none select-none" aria-hidden="true">
-          <div class="mb-2 flex items-center gap-2">
-            <div class="w-1 h-4"></div>
-            <span class="text-xs">—</span>
-          </div>
-          <div class="grid grid-cols-3 gap-2">
-            <div class="bg-[#161B22] px-3 py-2"><div class="h-4 w-16"></div></div>
-            <div class="bg-[#161B22] px-3 py-2"><div class="h-4 w-16"></div></div>
-            <div class="bg-[#161B22] px-3 py-2"><div class="h-4 w-16"></div></div>
-          </div>
-        </div>
-
-      </div><!-- end components -->
-
-      <div class="px-5 py-3 bg-[#080B0F] border-t border-[#21262D] flex items-center justify-between">
-        <span class="font-mono text-[9px] text-[#484F58] uppercase tracking-widest">Score &gt; 40 → SELL XAU &nbsp;|&nbsp; Score &lt; -40 → BUY XAU</span>
-        <span class="font-mono text-[9px] text-[#484F58]">MAX ±100</span>
-      </div>
-    </div><!-- end CPI card -->
-
-  </main><!-- end main grid -->
-
-  <!-- ── Combined signal bar ───────────────────────────────────────── -->
-  <div class="max-w-6xl mx-auto px-6 pb-8">
-    <div id="combinedBanner" class="border border-[#21262D] bg-[#0D1117] p-5">
-      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div class="relative flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+        <!-- Left: signal -->
         <div>
-          <div class="font-mono text-[9px] text-[#484F58] uppercase tracking-[0.25em] mb-1">Composite XAU/USD Bias</div>
-          <div id="combinedSignal" class="font-mono text-base font-bold text-[#484F58]">Refresh to generate composite signal</div>
+          <div class="font-mono text-[9px] text-[#484F58] uppercase tracking-[0.3em] mb-2">
+            ◈ Master Signal — All 4 Predictors
+          </div>
+          <div id="masterSignalText" class="font-mono text-2xl md:text-3xl font-bold text-[#484F58] leading-tight">
+            — AWAITING DATA —
+          </div>
+          <div class="mt-2 font-mono text-[10px] text-[#484F58]" id="masterSubtext">Composite score of all 4 predictors</div>
         </div>
-        <div class="flex items-center gap-6 font-mono text-xs">
-          <div class="flex items-center gap-2">
-            <div class="w-2 h-2 bg-[#00FF88]"></div>
-            <span class="text-[#484F58]">BUY XAU = USD weakness signal</span>
+
+        <!-- Right: score + mini bars -->
+        <div class="flex items-start gap-8">
+          <!-- Total score -->
+          <div class="text-right">
+            <div class="font-mono text-[9px] text-[#484F58] uppercase tracking-widest mb-1">Total Score</div>
+            <div id="masterScore" class="font-mono text-4xl font-bold text-[#484F58]">—</div>
+            <div class="font-mono text-[9px] text-[#484F58] mt-1">Range: ±400</div>
           </div>
-          <div class="flex items-center gap-2">
-            <div class="w-2 h-2 bg-[#FF3B3B]"></div>
-            <span class="text-[#484F58]">SELL XAU = USD strength signal</span>
+          <!-- Per-predictor mini scores -->
+          <div class="grid grid-cols-2 gap-x-6 gap-y-2 pt-1">
+            <div class="flex items-center gap-2">
+              <div class="w-[3px] h-3 bg-[#484F58] rounded-full" id="miniNfpBar"></div>
+              <span class="font-mono text-[9px] text-[#484F58]">NFP</span>
+              <span class="font-mono text-[9px] font-bold" id="miniNfpScore" style="color:#484F58">—</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-[3px] h-3 bg-[#484F58] rounded-full" id="miniCpiBar"></div>
+              <span class="font-mono text-[9px] text-[#484F58]">CPI</span>
+              <span class="font-mono text-[9px] font-bold" id="miniCpiScore" style="color:#484F58">—</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-[3px] h-3 bg-[#484F58] rounded-full" id="miniGrowthBar"></div>
+              <span class="font-mono text-[9px] text-[#484F58]">GDP</span>
+              <span class="font-mono text-[9px] font-bold" id="miniGrowthScore" style="color:#484F58">—</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="w-[3px] h-3 bg-[#484F58] rounded-full" id="miniFedBar"></div>
+              <span class="font-mono text-[9px] text-[#484F58]">FED</span>
+              <span class="font-mono text-[9px] font-bold" id="miniFedScore" style="color:#484F58">—</span>
+            </div>
           </div>
-          <div class="flex items-center gap-2">
-            <div class="w-2 h-2 bg-[#F0B429]"></div>
-            <span class="text-[#484F58]">WAIT = no clear edge</span>
+        </div>
+      </div>
+
+      <!-- Master progress bar -->
+      <div class="mt-4 relative">
+        <div class="flex justify-between font-mono text-[9px] text-[#484F58] mb-1">
+          <span>-400 STRONG BUY XAU</span><span>0 NEUTRAL</span><span>+400 STRONG SELL XAU</span>
+        </div>
+        <!-- Zone markers at ±40 -->
+        <div class="relative">
+          <div class="master-track">
+            <div id="masterFill" class="master-fill w-1/2 bg-[#484F58]"></div>
           </div>
+          <!-- ±40 threshold markers -->
+          <div class="absolute top-0 bottom-0 flex items-center pointer-events-none" style="left: calc(50% - (40/400)*50% );">
+            <div class="w-px h-3 bg-[#F0B429] opacity-60" style="margin-top:-3px"></div>
+          </div>
+          <div class="absolute top-0 bottom-0 flex items-center pointer-events-none" style="left: calc(50% + (40/400)*50% );">
+            <div class="w-px h-3 bg-[#F0B429] opacity-60" style="margin-top:-3px"></div>
+          </div>
+        </div>
+        <div class="flex justify-between font-mono text-[9px] text-[#484F58] mt-1">
+          <span class="text-[#00FF88]">BUY zone</span>
+          <span class="text-[#F0B429]">Neutral ±40</span>
+          <span class="text-[#FF3B3B]">SELL zone</span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ── Footer ────────────────────────────────────────────────────── -->
+  <!-- ══════════════════════════════════════════════════════════════════
+       4-CARD GRID
+  ══════════════════════════════════════════════════════════════════════ -->
+  <main class="max-w-[1400px] mx-auto px-6 pb-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+
+    <!-- ── CARD TEMPLATE macro (rendered 4×) ─────────────────────────
+         Cards: nfp · cpi · growth · fed
+    ──────────────────────────────────────────────────────────────────── -->
+
+    <!-- ① NFP PREDICTOR ─────────────────────────────────────────────── -->
+    <div id="nfpCard" class="macro-card bg-[#0D1117] border border-[#21262D] flex flex-col">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-[#21262D]">
+        <div class="flex items-center gap-2">
+          <span class="font-mono text-[9px] tracking-[0.2em] text-[#484F58]">01</span>
+          <div>
+            <div class="font-mono text-xs font-bold text-[#E6EDF3] tracking-wide">NFP PREDICTOR</div>
+            <div class="font-mono text-[9px] text-[#484F58]">Nonfarm Payrolls</div>
+          </div>
+        </div>
+        <span class="font-mono text-[9px] text-[#484F58]">XAU/USD</span>
+      </div>
+
+      <!-- Signal banner -->
+      <div id="nfpSignalBanner" class="px-4 py-4 border-b border-[#21262D]">
+        <div class="flex items-start justify-between gap-2 mb-3">
+          <div>
+            <div class="font-mono text-[9px] text-[#484F58] uppercase tracking-widest mb-1">Signal</div>
+            <div id="nfpSignal" class="font-mono text-sm font-bold text-[#484F58] leading-snug">— AWAITING —</div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="font-mono text-[9px] text-[#484F58] mb-1">Score</div>
+            <div id="nfpScore" class="font-mono text-2xl font-bold text-[#484F58]">—</div>
+          </div>
+        </div>
+        <div class="score-track"><div id="nfpBar" class="score-fill w-1/2 bg-[#484F58]"></div></div>
+        <div class="flex justify-between font-mono text-[8px] text-[#484F58] mt-1">
+          <span>-100</span><span>Threshold ±20</span><span>+100</span>
+        </div>
+      </div>
+
+      <!-- Components -->
+      <div class="divide-y divide-[#21262D] flex-1">
+
+        <!-- ADP -->
+        <div class="data-row px-4 py-3">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-1.5">
+              <div class="w-[3px] h-3.5 bg-[#484F58] rounded-full" id="adpBar"></div>
+              <span class="font-mono text-[10px] font-semibold text-[#8B949E] uppercase tracking-wider">ADP Nonfarm</span>
+            </div>
+            <div id="adpPoints" class="font-mono text-[10px] font-bold text-[#484F58]">±50</div>
+          </div>
+          <div class="grid grid-cols-3 gap-1" id="adpRow">
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">ACTUAL</div><div class="skeleton h-3 w-12"></div></div>
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">FCST</div><div class="skeleton h-3 w-12"></div></div>
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">STATUS</div><div class="skeleton h-3 w-12"></div></div>
+          </div>
+          <div class="font-mono text-[8px] text-[#484F58] mt-1" id="adpDate"></div>
+        </div>
+
+        <!-- ISM -->
+        <div class="data-row px-4 py-3">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-1.5">
+              <div class="w-[3px] h-3.5 bg-[#484F58] rounded-full" id="ismBar"></div>
+              <span class="font-mono text-[10px] font-semibold text-[#8B949E] uppercase tracking-wider">ISM PMI</span>
+            </div>
+            <div id="ismPoints" class="font-mono text-[10px] font-bold text-[#484F58]">±30</div>
+          </div>
+          <div class="grid grid-cols-3 gap-1" id="ismRow">
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">ACTUAL</div><div class="skeleton h-3 w-12"></div></div>
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">THRESH</div><div class="skeleton h-3 w-12"></div></div>
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">STATUS</div><div class="skeleton h-3 w-12"></div></div>
+          </div>
+          <div class="font-mono text-[8px] text-[#484F58] mt-1" id="ismDate"></div>
+        </div>
+
+        <!-- JOLTs -->
+        <div class="data-row px-4 py-3">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-1.5">
+              <div class="w-[3px] h-3.5 bg-[#484F58] rounded-full" id="joltsBar"></div>
+              <span class="font-mono text-[10px] font-semibold text-[#8B949E] uppercase tracking-wider">JOLTs</span>
+            </div>
+            <div id="joltsPoints" class="font-mono text-[10px] font-bold text-[#484F58]">±20</div>
+          </div>
+          <div class="grid grid-cols-3 gap-1" id="joltsRow">
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">ACTUAL</div><div class="skeleton h-3 w-12"></div></div>
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">FCST</div><div class="skeleton h-3 w-12"></div></div>
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">STATUS</div><div class="skeleton h-3 w-12"></div></div>
+          </div>
+          <div class="font-mono text-[8px] text-[#484F58] mt-1" id="joltsDate"></div>
+        </div>
+      </div>
+
+      <div class="px-4 py-2 bg-[#080B0F] border-t border-[#21262D] flex items-center justify-between">
+        <span class="font-mono text-[8px] text-[#484F58]">≥+20 SELL XAU &nbsp;|&nbsp; ≤−20 BUY XAU</span>
+        <span class="font-mono text-[8px] text-[#484F58]">MAX ±100</span>
+      </div>
+    </div><!-- /nfpCard -->
+
+    <!-- ② CPI PREDICTOR ─────────────────────────────────────────────── -->
+    <div id="cpiCard" class="macro-card bg-[#0D1117] border border-[#21262D] flex flex-col">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-[#21262D]">
+        <div class="flex items-center gap-2">
+          <span class="font-mono text-[9px] tracking-[0.2em] text-[#484F58]">02</span>
+          <div>
+            <div class="font-mono text-xs font-bold text-[#E6EDF3] tracking-wide">CPI PREDICTOR</div>
+            <div class="font-mono text-[9px] text-[#484F58]">Inflation Pressure</div>
+          </div>
+        </div>
+        <span class="font-mono text-[9px] text-[#484F58]">XAU/USD</span>
+      </div>
+
+      <div id="cpiSignalBanner" class="px-4 py-4 border-b border-[#21262D]">
+        <div class="flex items-start justify-between gap-2 mb-3">
+          <div>
+            <div class="font-mono text-[9px] text-[#484F58] uppercase tracking-widest mb-1">Signal</div>
+            <div id="cpiSignal" class="font-mono text-sm font-bold text-[#484F58] leading-snug">— AWAITING —</div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="font-mono text-[9px] text-[#484F58] mb-1">Score</div>
+            <div id="cpiScore" class="font-mono text-2xl font-bold text-[#484F58]">—</div>
+          </div>
+        </div>
+        <div class="score-track"><div id="cpiBar" class="score-fill w-1/2 bg-[#484F58]"></div></div>
+        <div class="flex justify-between font-mono text-[8px] text-[#484F58] mt-1">
+          <span>-100</span><span>Threshold ±20</span><span>+100</span>
+        </div>
+      </div>
+
+      <div class="divide-y divide-[#21262D] flex-1">
+        <!-- PPI -->
+        <div class="data-row px-4 py-3">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-1.5">
+              <div class="w-[3px] h-3.5 bg-[#484F58] rounded-full" id="ppiBar"></div>
+              <span class="font-mono text-[10px] font-semibold text-[#8B949E] uppercase tracking-wider">PPI</span>
+            </div>
+            <div id="ppiPoints" class="font-mono text-[10px] font-bold text-[#484F58]">±60</div>
+          </div>
+          <div class="grid grid-cols-3 gap-1" id="ppiRow">
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">ACTUAL</div><div class="skeleton h-3 w-12"></div></div>
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">FCST</div><div class="skeleton h-3 w-12"></div></div>
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">STATUS</div><div class="skeleton h-3 w-12"></div></div>
+          </div>
+          <div class="font-mono text-[8px] text-[#484F58] mt-1" id="ppiDate"></div>
+        </div>
+
+        <!-- Crude Oil -->
+        <div class="data-row px-4 py-3">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-1.5">
+              <div class="w-[3px] h-3.5 bg-[#484F58] rounded-full" id="crudeBar"></div>
+              <span class="font-mono text-[10px] font-semibold text-[#8B949E] uppercase tracking-wider">WTI Crude</span>
+            </div>
+            <div id="crudePoints" class="font-mono text-[10px] font-bold text-[#484F58]">±40</div>
+          </div>
+          <div class="grid grid-cols-3 gap-1" id="crudeRow">
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">CURRENT</div><div class="skeleton h-3 w-12"></div></div>
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">30D AVG</div><div class="skeleton h-3 w-12"></div></div>
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">STATUS</div><div class="skeleton h-3 w-12"></div></div>
+          </div>
+          <div class="font-mono text-[8px] text-[#484F58] mt-1">Yahoo Finance · real-time</div>
+        </div>
+
+        <!-- Spacer fills card to match NFP height -->
+        <div class="flex-1 px-4 py-3 opacity-0 select-none pointer-events-none" aria-hidden="true">
+          <div class="h-3"></div>
+        </div>
+      </div>
+
+      <div class="px-4 py-2 bg-[#080B0F] border-t border-[#21262D] flex items-center justify-between">
+        <span class="font-mono text-[8px] text-[#484F58]">≥+20 SELL XAU &nbsp;|&nbsp; ≤−20 BUY XAU</span>
+        <span class="font-mono text-[8px] text-[#484F58]">MAX ±100</span>
+      </div>
+    </div><!-- /cpiCard -->
+
+    <!-- ③ GROWTH PREDICTOR ──────────────────────────────────────────── -->
+    <div id="growthCard" class="macro-card bg-[#0D1117] border border-[#21262D] flex flex-col">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-[#21262D]">
+        <div class="flex items-center gap-2">
+          <span class="font-mono text-[9px] tracking-[0.2em] text-[#484F58]">03</span>
+          <div>
+            <div class="font-mono text-xs font-bold text-[#E6EDF3] tracking-wide">GROWTH PREDICTOR</div>
+            <div class="font-mono text-[9px] text-[#484F58]">GDP &amp; Retail Sales</div>
+          </div>
+        </div>
+        <span class="font-mono text-[9px] text-[#484F58]">XAU/USD</span>
+      </div>
+
+      <div id="growthSignalBanner" class="px-4 py-4 border-b border-[#21262D]">
+        <div class="flex items-start justify-between gap-2 mb-3">
+          <div>
+            <div class="font-mono text-[9px] text-[#484F58] uppercase tracking-widest mb-1">Signal</div>
+            <div id="growthSignal" class="font-mono text-sm font-bold text-[#484F58] leading-snug">— AWAITING —</div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="font-mono text-[9px] text-[#484F58] mb-1">Score</div>
+            <div id="growthScore" class="font-mono text-2xl font-bold text-[#484F58]">—</div>
+          </div>
+        </div>
+        <div class="score-track"><div id="growthBar" class="score-fill w-1/2 bg-[#484F58]"></div></div>
+        <div class="flex justify-between font-mono text-[8px] text-[#484F58] mt-1">
+          <span>-100</span><span>Threshold ±20</span><span>+100</span>
+        </div>
+      </div>
+
+      <div class="divide-y divide-[#21262D] flex-1">
+        <!-- GDP -->
+        <div class="data-row px-4 py-3">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-1.5">
+              <div class="w-[3px] h-3.5 bg-[#484F58] rounded-full" id="gdpBar"></div>
+              <span class="font-mono text-[10px] font-semibold text-[#8B949E] uppercase tracking-wider">GDP Growth Rate</span>
+            </div>
+            <div id="gdpPoints" class="font-mono text-[10px] font-bold text-[#484F58]">±60</div>
+          </div>
+          <div class="grid grid-cols-3 gap-1" id="gdpRow">
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">ACTUAL</div><div class="skeleton h-3 w-12"></div></div>
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">FCST</div><div class="skeleton h-3 w-12"></div></div>
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">STATUS</div><div class="skeleton h-3 w-12"></div></div>
+          </div>
+          <div class="font-mono text-[8px] text-[#484F58] mt-1" id="gdpDate"></div>
+        </div>
+
+        <!-- Retail Sales -->
+        <div class="data-row px-4 py-3">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-1.5">
+              <div class="w-[3px] h-3.5 bg-[#484F58] rounded-full" id="retailBar"></div>
+              <span class="font-mono text-[10px] font-semibold text-[#8B949E] uppercase tracking-wider">Retail Sales m/m</span>
+            </div>
+            <div id="retailPoints" class="font-mono text-[10px] font-bold text-[#484F58]">±40</div>
+          </div>
+          <div class="grid grid-cols-3 gap-1" id="retailRow">
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">ACTUAL</div><div class="skeleton h-3 w-12"></div></div>
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">FCST</div><div class="skeleton h-3 w-12"></div></div>
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">STATUS</div><div class="skeleton h-3 w-12"></div></div>
+          </div>
+          <div class="font-mono text-[8px] text-[#484F58] mt-1" id="retailDate"></div>
+        </div>
+
+        <!-- Spacer -->
+        <div class="flex-1 px-4 py-3 opacity-0 select-none pointer-events-none" aria-hidden="true">
+          <div class="h-3"></div>
+        </div>
+      </div>
+
+      <div class="px-4 py-2 bg-[#080B0F] border-t border-[#21262D] flex items-center justify-between">
+        <span class="font-mono text-[8px] text-[#484F58]">≥+20 SELL XAU &nbsp;|&nbsp; ≤−20 BUY XAU</span>
+        <span class="font-mono text-[8px] text-[#484F58]">MAX ±100</span>
+      </div>
+    </div><!-- /growthCard -->
+
+    <!-- ④ FED PREDICTOR ─────────────────────────────────────────────── -->
+    <div id="fedCard" class="macro-card bg-[#0D1117] border border-[#21262D] flex flex-col">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-[#21262D]">
+        <div class="flex items-center gap-2">
+          <span class="font-mono text-[9px] tracking-[0.2em] text-[#484F58]">04</span>
+          <div>
+            <div class="font-mono text-xs font-bold text-[#E6EDF3] tracking-wide">FED PREDICTOR</div>
+            <div class="font-mono text-[9px] text-[#484F58]">Interest Rate Bias</div>
+          </div>
+        </div>
+        <span class="font-mono text-[9px] text-[#484F58]">XAU/USD</span>
+      </div>
+
+      <div id="fedSignalBanner" class="px-4 py-4 border-b border-[#21262D]">
+        <div class="flex items-start justify-between gap-2 mb-3">
+          <div>
+            <div class="font-mono text-[9px] text-[#484F58] uppercase tracking-widest mb-1">Signal</div>
+            <div id="fedSignal" class="font-mono text-sm font-bold text-[#484F58] leading-snug">— AWAITING —</div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="font-mono text-[9px] text-[#484F58] mb-1">Score</div>
+            <div id="fedScore" class="font-mono text-2xl font-bold text-[#484F58]">—</div>
+          </div>
+        </div>
+        <div class="score-track"><div id="fedBar" class="score-fill w-1/2 bg-[#484F58]"></div></div>
+        <div class="flex justify-between font-mono text-[8px] text-[#484F58] mt-1">
+          <span>-100</span><span>Threshold ±20</span><span>+100</span>
+        </div>
+      </div>
+
+      <div class="divide-y divide-[#21262D] flex-1">
+        <!-- Fed Rate display — large format -->
+        <div class="data-row px-4 py-3">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-1.5">
+              <div class="w-[3px] h-3.5 bg-[#484F58] rounded-full" id="fedRateBar"></div>
+              <span class="font-mono text-[10px] font-semibold text-[#8B949E] uppercase tracking-wider">Fed Interest Rate</span>
+            </div>
+            <div id="fedRatePoints" class="font-mono text-[10px] font-bold text-[#484F58]">±100</div>
+          </div>
+
+          <!-- Large rate display -->
+          <div class="bg-[#161B22] px-3 py-3 mb-2 flex items-center justify-between">
+            <div>
+              <div class="font-mono text-[8px] text-[#484F58] mb-1">CURRENT RATE</div>
+              <div id="fedRateDisplay" class="font-mono text-3xl font-bold text-[#484F58]">—%</div>
+            </div>
+            <div class="text-right">
+              <div class="font-mono text-[8px] text-[#484F58] mb-1">PREV RATE</div>
+              <div id="fedPrevRate" class="font-mono text-lg font-bold text-[#484F58]">—%</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-1" id="fedRateRow">
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">CHANGE</div><div class="skeleton h-3 w-12"></div></div>
+            <div class="bg-[#161B22] px-2 py-1.5"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">BIAS</div><div class="skeleton h-3 w-12"></div></div>
+          </div>
+          <div class="font-mono text-[8px] text-[#484F58] mt-1" id="fedRateDate"></div>
+        </div>
+
+        <!-- Rate trend visual -->
+        <div class="px-4 py-3">
+          <div class="font-mono text-[8px] text-[#484F58] uppercase tracking-widest mb-2">Rate Trend</div>
+          <div id="rateTrend" class="flex items-end gap-[3px] h-8">
+            <!-- Rendered by JS -->
+            <div class="skeleton h-full w-full rounded-sm"></div>
+          </div>
+          <div class="flex justify-between font-mono text-[8px] text-[#484F58] mt-1">
+            <span>Older</span><span>Current</span>
+          </div>
+        </div>
+
+        <!-- Spacer -->
+        <div class="flex-1 px-4 py-3 opacity-0 select-none pointer-events-none" aria-hidden="true">
+          <div class="h-3"></div>
+        </div>
+      </div>
+
+      <div class="px-4 py-2 bg-[#080B0F] border-t border-[#21262D] flex items-center justify-between">
+        <span class="font-mono text-[8px] text-[#484F58]">Higher rate → SELL XAU &nbsp;|&nbsp; Lower rate → BUY XAU</span>
+        <span class="font-mono text-[8px] text-[#484F58]">MAX ±100</span>
+      </div>
+    </div><!-- /fedCard -->
+
+  </main><!-- /4-card grid -->
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       USD NEWS RADAR
+  ══════════════════════════════════════════════════════════════════════ -->
+  <div class="max-w-[1400px] mx-auto px-6 pb-8">
+    <div class="border border-[#21262D] bg-[#0D1117]">
+
+      <!-- Section header -->
+      <div class="flex items-center justify-between px-5 py-3 border-b border-[#21262D] bg-[#080B0F]">
+        <div class="flex items-center gap-3">
+          <!-- Pulsing radar dot -->
+          <div class="relative w-4 h-4 flex items-center justify-center">
+            <div class="absolute w-4 h-4 rounded-full bg-[#00FF88] opacity-20 animate-ping"></div>
+            <div class="w-2 h-2 rounded-full bg-[#00FF88] status-dot"></div>
+          </div>
+          <span class="font-mono text-xs font-bold text-[#E6EDF3] tracking-widest uppercase">Upcoming USD News Radar</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-3 font-mono text-[8px] text-[#484F58]">
+            <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 bg-[#FF3B3B]"></span>HIGH</span>
+            <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 bg-[#F0B429]"></span>MEDIUM</span>
+            <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 bg-[#484F58]"></span>LOW</span>
+          </div>
+          <span class="font-mono text-[8px] text-[#484F58]" id="newsCount">— events</span>
+        </div>
+      </div>
+
+      <!-- News grid -->
+      <div id="newsGrid" class="news-grid p-1 min-h-[80px]">
+        <!-- Loading state -->
+        <div class="col-span-full flex items-center justify-center py-8">
+          <span class="font-mono text-xs text-[#484F58]">Fetching upcoming events<span class="cursor">_</span></span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Footer ─────────────────────────────────────────────────────── -->
   <footer class="border-t border-[#21262D] px-6 py-4">
-    <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
-      <span class="font-mono text-[10px] text-[#484F58] tracking-widest uppercase">DEPRESSEDESIGN Macro Predictor — For research purposes only. Not financial advice.</span>
-      <span class="font-mono text-[10px] text-[#484F58]">Data: FMP + Yahoo Finance</span>
+    <div class="max-w-[1400px] mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
+      <span class="font-mono text-[10px] text-[#484F58] tracking-widest uppercase">DEPRESSEDESIGN Macro Predictor v3.0 — For research only. Not financial advice.</span>
+      <span class="font-mono text-[10px] text-[#484F58]">Data: FMP + Yahoo Finance &nbsp;·&nbsp; Threshold ±20 per card &nbsp;·&nbsp; Master signal ±40</span>
     </div>
   </footer>
 
-  <!-- ── Error toast ────────────────────────────────────────────────── -->
-  <div id="errorToast" class="fixed bottom-6 right-6 hidden border border-[#FF3B3B] bg-[#0D1117] px-4 py-3 max-w-sm z-50">
-    <div class="font-mono text-xs text-[#FF3B3B]" id="errorMsg">Error fetching data.</div>
+  <!-- ── Error toast ─────────────────────────────────────────────────── -->
+  <div id="errorToast" class="fixed bottom-6 right-6 hidden border border-[#FF3B3B] bg-[#0D1117] px-4 py-3 max-w-sm z-50 shadow-lg">
+    <div class="flex items-start gap-2">
+      <span class="text-[#FF3B3B] font-mono text-xs mt-0.5">✕</span>
+      <div class="font-mono text-xs text-[#FF3B3B]" id="errorMsg">Error fetching data.</div>
+    </div>
   </div>
 
-  <!-- ── Script ─────────────────────────────────────────────────────── -->
+  <!-- ══════════════════════════════════════════════════════════════════
+       JAVASCRIPT
+  ══════════════════════════════════════════════════════════════════════ -->
   <script>
-    // ─── Signal classification helpers ─────────────────────────────
+    // ─── CONSTANTS ───────────────────────────────────────────────────
+    const CARD_THRESHOLD  = 20;   // ±20 per-card signal threshold
+    const MASTER_THRESHOLD = 40;  // ±40 master composite threshold
+
+    // ─── SIGNAL HELPERS ──────────────────────────────────────────────
+
+    /** Classify a score using the aggressive ±20 threshold */
+    function classifyByScore(score) {
+      if (score >= CARD_THRESHOLD)  return 'sell';
+      if (score <= -CARD_THRESHOLD) return 'buy';
+      return 'wait';
+    }
+
+    /** Classify from a signal string (fallback for legacy signals) */
     function classifySignal(signalStr) {
       const s = (signalStr || '').toUpperCase();
-      if (s.includes('BUY')) return 'buy';
+      if (s.includes('BUY'))  return 'buy';
       if (s.includes('SELL')) return 'sell';
       return 'wait';
     }
@@ -518,235 +693,450 @@
     }
 
     function signalGlow(type) {
-      return { buy: 'glow-buy border-buy bg-buy-dim', sell: 'glow-sell border-sell bg-sell-dim', wait: 'glow-wait border-wait bg-wait-dim' }[type] || '';
+      const g = { buy: 'glow-buy border-buy', sell: 'glow-sell border-sell', wait: 'glow-wait border-wait' };
+      return g[type] || '';
     }
 
-    // ─── Format numbers ─────────────────────────────────────────────
+    function bannerBg(type) {
+      return { buy: 'bg-buy-dim', sell: 'bg-sell-dim', wait: 'bg-wait-dim' }[type] || '';
+    }
+
+    // ─── FORMAT HELPERS ───────────────────────────────────────────────
+
     function fmt(val, unit = '') {
       if (val === null || val === undefined) return 'N/A';
       const n = parseFloat(val);
       if (isNaN(n)) return String(val);
-      // Large numbers (employment in thousands/millions)
-      if (Math.abs(n) >= 1000) return n.toLocaleString('en-US', { maximumFractionDigits: 0 }) + unit;
+      if (Math.abs(n) >= 1_000_000) return (n / 1_000_000).toFixed(2) + 'M' + unit;
+      if (Math.abs(n) >= 1000)      return n.toLocaleString('en-US', { maximumFractionDigits: 0 }) + unit;
       return n.toFixed(2) + unit;
     }
 
-    // ─── Score bar ──────────────────────────────────────────────────
-    function updateScoreBar(barId, score, type) {
-      const bar = document.getElementById(barId);
-      if (!bar) return;
-      // Map -100..100 → 0..100% width, with midpoint at 50%
-      const pct = ((score + 100) / 200) * 100;
-      bar.style.width = pct + '%';
-      bar.style.background = signalColor(type);
-      bar.style.boxShadow = type === 'buy'
-        ? '0 0 8px rgba(0,255,136,0.6)'
-        : type === 'sell'
-        ? '0 0 8px rgba(255,59,59,0.6)'
-        : '0 0 8px rgba(240,180,41,0.6)';
+    function fmtPoints(pts) {
+      return (pts > 0 ? '+' : '') + pts + ' pts';
     }
 
-    // ─── Render a 3-cell row ─────────────────────────────────────────
-    function renderRow(id, col1, col2, col3, labels) {
+    function fmtScore(score) {
+      return (score > 0 ? '+' : '') + score;
+    }
+
+    // ─── DOM UTILITIES ────────────────────────────────────────────────
+
+    function setEl(id, text, color) {
       const el = document.getElementById(id);
       if (!el) return;
-      el.innerHTML = [
-        { label: labels[0], value: col1 },
-        { label: labels[1], value: col2 },
-        { label: labels[2], value: col3 },
-      ].map(({ label, value }) => `
-        <div class="bg-[#161B22] px-3 py-2">
-          <div class="font-mono text-[9px] text-[#484F58] uppercase mb-1">${label}</div>
-          <div class="font-mono text-xs font-semibold text-[#E6EDF3]">${value}</div>
-        </div>`).join('');
+      if (text !== undefined) el.textContent = text;
+      if (color) el.style.color = color;
     }
 
-    // ─── Color accent bar ────────────────────────────────────────────
     function setAccentBar(id, points) {
       const el = document.getElementById(id);
       if (!el) return;
-      el.style.background = points > 0 ? '#00FF88' : points < 0 ? '#FF3B3B' : '#484F58';
-      el.style.boxShadow = points > 0
-        ? '0 0 6px rgba(0,255,136,0.8)'
-        : points < 0 ? '0 0 6px rgba(255,59,59,0.8)' : 'none';
+      const c = points > 0 ? '#00FF88' : points < 0 ? '#FF3B3B' : '#484F58';
+      el.style.background = c;
+      el.style.boxShadow  = points !== 0 ? `0 0 6px ${c}99` : 'none';
     }
 
-    // ─── Render NFP card ─────────────────────────────────────────────
+    function updateScoreBar(barId, score, type, maxAbs = 100) {
+      const bar = document.getElementById(barId);
+      if (!bar) return;
+      const pct = ((score + maxAbs) / (2 * maxAbs)) * 100;
+      const c   = signalColor(type);
+      bar.style.width      = Math.max(0, Math.min(100, pct)) + '%';
+      bar.style.background = c;
+      bar.style.boxShadow  = `0 0 8px ${c}66`;
+    }
+
+    function renderRow3(id, col1, col2, col3, labels) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = [
+        { l: labels[0], v: col1 },
+        { l: labels[1], v: col2 },
+        { l: labels[2], v: col3 },
+      ].map(({ l, v }) => `
+        <div class="bg-[#161B22] px-2 py-1.5">
+          <div class="font-mono text-[8px] text-[#484F58] mb-0.5">${l}</div>
+          <div class="font-mono text-[10px] font-semibold text-[#E6EDF3] leading-tight">${v}</div>
+        </div>`).join('');
+    }
+
+    function renderRow2(id, col1, col2, labels) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = [
+        { l: labels[0], v: col1 },
+        { l: labels[1], v: col2 },
+      ].map(({ l, v }) => `
+        <div class="bg-[#161B22] px-2 py-1.5">
+          <div class="font-mono text-[8px] text-[#484F58] mb-0.5">${l}</div>
+          <div class="font-mono text-[10px] font-semibold text-[#E6EDF3] leading-tight">${v}</div>
+        </div>`).join('');
+    }
+
+    function applyCardStyle(cardId, bannerId, type) {
+      const card   = document.getElementById(cardId);
+      const banner = document.getElementById(bannerId);
+      if (card)   card.className   = `macro-card bg-[#0D1117] border flex flex-col ${signalGlow(type)}`;
+      if (banner) banner.className = `px-4 py-4 border-b border-[#21262D] ${bannerBg(type)}`;
+    }
+
+    // ─── RENDER NFP ───────────────────────────────────────────────────
+
     function renderNFP(nfp) {
-      const type = classifySignal(nfp.signal);
+      const type  = classifyByScore(nfp.score);
       const color = signalColor(type);
 
-      // Signal text
-      document.getElementById('nfpSignal').textContent = nfp.signal;
-      document.getElementById('nfpSignal').style.color = color;
-      document.getElementById('nfpScore').textContent = (nfp.score > 0 ? '+' : '') + nfp.score;
-      document.getElementById('nfpScore').style.color = color;
-
-      // Card border glow
-      const card = document.getElementById('nfpCard');
-      card.className = `macro-card bg-[#0D1117] border rounded-none ${signalGlow(type)}`;
-
-      // Banner bg
-      const banner = document.getElementById('nfpSignalBanner');
-      banner.className = `px-5 py-5 border-b border-[#21262D] ${type === 'buy' ? 'bg-buy-dim' : type === 'sell' ? 'bg-sell-dim' : 'bg-wait-dim'}`;
-
+      setEl('nfpSignal', nfp.signal, color);
+      setEl('nfpScore',  fmtScore(nfp.score), color);
+      applyCardStyle('nfpCard', 'nfpSignalBanner', type);
       updateScoreBar('nfpBar', nfp.score, type);
 
+      const { adp, ism, jolts } = nfp.components;
+
       // ADP
-      const adp = nfp.components.adp;
       setAccentBar('adpBar', adp.points);
-      document.getElementById('adpPoints').textContent = (adp.points > 0 ? '+' : '') + adp.points + ' pts';
-      document.getElementById('adpPoints').style.color = adp.points > 0 ? '#00FF88' : adp.points < 0 ? '#FF3B3B' : '#484F58';
-      renderRow('adpRow',
-        fmt(adp.actual, 'K'),
-        fmt(adp.estimate, 'K'),
-        adp.status,
-        ['Actual', 'Forecast', 'Status']
-      );
-      document.getElementById('adpDate').textContent = adp.date ? 'Data date: ' + adp.date : '';
+      setEl('adpPoints', fmtPoints(adp.points), adp.points > 0 ? '#00FF88' : adp.points < 0 ? '#FF3B3B' : '#484F58');
+      renderRow3('adpRow', fmt(adp.actual, 'K'), fmt(adp.estimate, 'K'), adp.status, ['ACTUAL', 'FCST', 'STATUS']);
+      setEl('adpDate', adp.date ? 'Date: ' + adp.date : '');
 
       // ISM
-      const ism = nfp.components.ism;
       setAccentBar('ismBar', ism.points);
-      document.getElementById('ismPoints').textContent = (ism.points > 0 ? '+' : '') + ism.points + ' pts';
-      document.getElementById('ismPoints').style.color = ism.points > 0 ? '#00FF88' : ism.points < 0 ? '#FF3B3B' : '#484F58';
-      renderRow('ismRow',
-        fmt(ism.actual),
-        '50.0',
-        ism.status,
-        ['Actual', 'Threshold', 'Status']
-      );
-      document.getElementById('ismDate').textContent = ism.date ? 'Data date: ' + ism.date : '';
+      setEl('ismPoints', fmtPoints(ism.points), ism.points > 0 ? '#00FF88' : ism.points < 0 ? '#FF3B3B' : '#484F58');
+      renderRow3('ismRow', fmt(ism.actual), '50.0', ism.status, ['ACTUAL', 'THRESH', 'STATUS']);
+      setEl('ismDate', ism.date ? 'Date: ' + ism.date : '');
 
       // JOLTs
-      const jolts = nfp.components.jolts;
       setAccentBar('joltsBar', jolts.points);
-      document.getElementById('joltsPoints').textContent = (jolts.points > 0 ? '+' : '') + jolts.points + ' pts';
-      document.getElementById('joltsPoints').style.color = jolts.points > 0 ? '#00FF88' : jolts.points < 0 ? '#FF3B3B' : '#484F58';
-      renderRow('joltsRow',
-        fmt(jolts.actual, 'M'),
-        fmt(jolts.estimate, 'M'),
-        jolts.status,
-        ['Actual', 'Forecast', 'Status']
-      );
-      document.getElementById('joltsDate').textContent = jolts.date ? 'Data date: ' + jolts.date : '';
+      setEl('joltsPoints', fmtPoints(jolts.points), jolts.points > 0 ? '#00FF88' : jolts.points < 0 ? '#FF3B3B' : '#484F58');
+      renderRow3('joltsRow', fmt(jolts.actual, 'M'), fmt(jolts.estimate, 'M'), jolts.status, ['ACTUAL', 'FCST', 'STATUS']);
+      setEl('joltsDate', jolts.date ? 'Date: ' + jolts.date : '');
+
+      return nfp.score;
     }
 
-    // ─── Render CPI card ─────────────────────────────────────────────
+    // ─── RENDER CPI ───────────────────────────────────────────────────
+
     function renderCPI(cpi) {
-      const type = classifySignal(cpi.signal);
+      const type  = classifyByScore(cpi.score);
       const color = signalColor(type);
 
-      document.getElementById('cpiSignal').textContent = cpi.signal;
-      document.getElementById('cpiSignal').style.color = color;
-      document.getElementById('cpiScore').textContent = (cpi.score > 0 ? '+' : '') + cpi.score;
-      document.getElementById('cpiScore').style.color = color;
-
-      const card = document.getElementById('cpiCard');
-      card.className = `macro-card bg-[#0D1117] border rounded-none ${signalGlow(type)}`;
-
-      const banner = document.getElementById('cpiSignalBanner');
-      banner.className = `px-5 py-5 border-b border-[#21262D] ${type === 'buy' ? 'bg-buy-dim' : type === 'sell' ? 'bg-sell-dim' : 'bg-wait-dim'}`;
-
+      setEl('cpiSignal', cpi.signal, color);
+      setEl('cpiScore',  fmtScore(cpi.score), color);
+      applyCardStyle('cpiCard', 'cpiSignalBanner', type);
       updateScoreBar('cpiBar', cpi.score, type);
 
-      // PPI
-      const ppi = cpi.components.ppi;
-      setAccentBar('ppiBar', ppi.points);
-      document.getElementById('ppiPoints').textContent = (ppi.points > 0 ? '+' : '') + ppi.points + ' pts';
-      document.getElementById('ppiPoints').style.color = ppi.points > 0 ? '#00FF88' : ppi.points < 0 ? '#FF3B3B' : '#484F58';
-      renderRow('ppiRow',
-        fmt(ppi.actual, '%'),
-        fmt(ppi.estimate, '%'),
-        ppi.status,
-        ['Actual', 'Forecast', 'Status']
-      );
-      document.getElementById('ppiDate').textContent = ppi.date ? 'Data date: ' + ppi.date : '';
+      const { ppi, crude } = cpi.components;
 
-      // Crude Oil
-      const crude = cpi.components.crude;
+      // PPI
+      setAccentBar('ppiBar', ppi.points);
+      setEl('ppiPoints', fmtPoints(ppi.points), ppi.points > 0 ? '#00FF88' : ppi.points < 0 ? '#FF3B3B' : '#484F58');
+      renderRow3('ppiRow', fmt(ppi.actual, '%'), fmt(ppi.estimate, '%'), ppi.status, ['ACTUAL', 'FCST', 'STATUS']);
+      setEl('ppiDate', ppi.date ? 'Date: ' + ppi.date : '');
+
+      // Crude
       setAccentBar('crudeBar', crude.points);
-      document.getElementById('crudePoints').textContent = (crude.points > 0 ? '+' : '') + crude.points + ' pts';
-      document.getElementById('crudePoints').style.color = crude.points > 0 ? '#00FF88' : crude.points < 0 ? '#FF3B3B' : '#484F58';
-      renderRow('crudeRow',
+      setEl('crudePoints', fmtPoints(crude.points), crude.points > 0 ? '#00FF88' : crude.points < 0 ? '#FF3B3B' : '#484F58');
+      renderRow3('crudeRow',
         crude.current !== null ? '$' + crude.current : 'N/A',
-        crude.avg30 !== null ? '$' + crude.avg30 : 'N/A',
+        crude.avg30   !== null ? '$' + crude.avg30   : 'N/A',
         crude.status,
-        ['Current', '30-Day Avg', 'Status']
+        ['CURRENT', '30D AVG', 'STATUS']
       );
+
+      return cpi.score;
     }
 
-    // ─── Combined signal ─────────────────────────────────────────────
-    function renderCombined(nfp, cpi) {
-      const nfpType = classifySignal(nfp.signal);
-      const cpiType = classifySignal(cpi.signal);
-      const banner = document.getElementById('combinedBanner');
-      const label = document.getElementById('combinedSignal');
+    // ─── RENDER GROWTH ────────────────────────────────────────────────
 
-      let combined, type;
-      if (nfpType === 'buy' && cpiType === 'buy') {
-        combined = '⬆ STRONG BUY XAU — Both NFP & CPI favor USD weakness';
-        type = 'buy';
-      } else if (nfpType === 'sell' && cpiType === 'sell') {
-        combined = '⬇ STRONG SELL XAU — Both NFP & CPI favor USD strength';
-        type = 'sell';
-      } else if (nfpType === 'buy' || cpiType === 'buy') {
-        combined = '⬆ LEAN BUY XAU — One leg favors USD weakness';
-        type = 'buy';
-      } else if (nfpType === 'sell' || cpiType === 'sell') {
-        combined = '⬇ LEAN SELL XAU — One leg favors USD strength';
-        type = 'sell';
+    function renderGrowth(growth) {
+      // growth: { score, signal, components: { gdp, retail_sales } }
+      if (!growth) return 0;
+
+      const type  = classifyByScore(growth.score);
+      const color = signalColor(type);
+
+      setEl('growthSignal', growth.signal, color);
+      setEl('growthScore',  fmtScore(growth.score), color);
+      applyCardStyle('growthCard', 'growthSignalBanner', type);
+      updateScoreBar('growthBar', growth.score, type);
+
+      const comp = growth.components || {};
+
+      // GDP
+      const gdp = comp.gdp || comp.gdpGrowth || comp.gdp_growth || {};
+      setAccentBar('gdpBar', gdp.points || 0);
+      setEl('gdpPoints', fmtPoints(gdp.points || 0), (gdp.points||0) > 0 ? '#00FF88' : (gdp.points||0) < 0 ? '#FF3B3B' : '#484F58');
+      renderRow3('gdpRow',
+        fmt(gdp.actual, '%'),
+        fmt(gdp.estimate || gdp.forecast, '%'),
+        gdp.status || 'N/A',
+        ['ACTUAL', 'FCST', 'STATUS']
+      );
+      setEl('gdpDate', gdp.date ? 'Date: ' + gdp.date : '');
+
+      // Retail Sales
+      const retail = comp.retail_sales || comp.retailSales || comp.retail || {};
+      setAccentBar('retailBar', retail.points || 0);
+      setEl('retailPoints', fmtPoints(retail.points || 0), (retail.points||0) > 0 ? '#00FF88' : (retail.points||0) < 0 ? '#FF3B3B' : '#484F58');
+      renderRow3('retailRow',
+        fmt(retail.actual, '%'),
+        fmt(retail.estimate || retail.forecast, '%'),
+        retail.status || 'N/A',
+        ['ACTUAL', 'FCST', 'STATUS']
+      );
+      setEl('retailDate', retail.date ? 'Date: ' + retail.date : '');
+
+      return growth.score;
+    }
+
+    // ─── RENDER FED ───────────────────────────────────────────────────
+
+    function renderFed(fed) {
+      // fed: { score, signal, components: { fed_rate: { current, previous, change, bias, points, date } } }
+      if (!fed) return 0;
+
+      const type  = classifyByScore(fed.score);
+      const color = signalColor(type);
+
+      setEl('fedSignal', fed.signal, color);
+      setEl('fedScore',  fmtScore(fed.score), color);
+      applyCardStyle('fedCard', 'fedSignalBanner', type);
+      updateScoreBar('fedBar', fed.score, type);
+
+      const comp    = fed.components || {};
+      const rate    = comp.fed_rate || comp.fedRate || comp.interest_rate || {};
+
+      // Large rate display
+      const currentRate = rate.current !== null && rate.current !== undefined ? parseFloat(rate.current).toFixed(2) + '%' : '—%';
+      const prevRate    = rate.previous !== null && rate.previous !== undefined ? parseFloat(rate.previous).toFixed(2) + '%' : '—%';
+      setEl('fedRateDisplay', currentRate, color);
+      setEl('fedPrevRate',    prevRate);
+
+      setAccentBar('fedRateBar', rate.points || 0);
+      setEl('fedRatePoints', fmtPoints(rate.points || 0), (rate.points||0) > 0 ? '#00FF88' : (rate.points||0) < 0 ? '#FF3B3B' : '#484F58');
+
+      const changeStr = rate.change !== undefined && rate.change !== null
+        ? (rate.change > 0 ? '+' : '') + parseFloat(rate.change).toFixed(2) + 'bps'
+        : 'N/A';
+      renderRow2('fedRateRow', changeStr, rate.bias || rate.status || 'N/A', ['CHANGE', 'BIAS']);
+      setEl('fedRateDate', rate.date ? 'Date: ' + rate.date : '');
+
+      // Rate trend mini-chart
+      renderRateTrend(rate);
+
+      return fed.score;
+    }
+
+    function renderRateTrend(rate) {
+      const el = document.getElementById('rateTrend');
+      if (!el) return;
+
+      // Use history array if provided, else simulate from current/previous
+      const history = rate.history || rate.trend || null;
+      let bars;
+
+      if (history && Array.isArray(history) && history.length > 0) {
+        bars = history.slice(-8);
       } else {
-        combined = '— WAIT & SEE — No clear directional edge from either predictor';
-        type = 'wait';
+        // Synthesise a 6-bar display from current + prev
+        const cur  = parseFloat(rate.current)  || 5.25;
+        const prev = parseFloat(rate.previous) || 5.50;
+        bars = [prev - 0.25, prev - 0.25, prev, prev, prev, cur];
       }
 
-      label.textContent = combined;
-      label.style.color = signalColor(type);
-      banner.className = `border bg-[#0D1117] p-5 ${signalGlow(type)}`;
+      const minV = Math.min(...bars) - 0.25;
+      const maxV = Math.max(...bars) + 0.25;
+      const range = maxV - minV || 1;
+
+      el.innerHTML = bars.map((v, i) => {
+        const h    = Math.max(10, ((v - minV) / range) * 100);
+        const last = i === bars.length - 1;
+        const bg   = last ? signalColor(classifyByScore(rate.points || 0)) : '#21262D';
+        return `<div class="flex-1 rounded-sm transition-all duration-500" style="height:${h}%;background:${bg};${last ? `box-shadow:0 0 6px ${bg}66` : ''}"></div>`;
+      }).join('');
     }
 
-    // ─── Main load function ──────────────────────────────────────────
+    // ─── RENDER MASTER SIGNAL ─────────────────────────────────────────
+
+    function renderMaster(scores) {
+      const total = scores.reduce((a, b) => a + b, 0);
+      const maxAbs = 400; // 4 cards × ±100
+
+      let label, type;
+      if (total >= MASTER_THRESHOLD) {
+        label = '⬇  STRONG SELL XAU';
+        type  = 'sell';
+      } else if (total <= -MASTER_THRESHOLD) {
+        label = '⬆  STRONG BUY XAU';
+        type  = 'buy';
+      } else {
+        label = '—  NEUTRAL / CHOPPY MARKET';
+        type  = 'wait';
+      }
+
+      const color = signalColor(type);
+      const banner = document.getElementById('masterBanner');
+      if (banner) {
+        banner.className = `border bg-[#0D1117] p-5 relative overflow-hidden ${signalGlow(type)}`;
+        // Apply border class inline since Tailwind JIT won't pick up dynamic classes
+        const borderColors = { buy: 'rgba(0,255,136,0.4)', sell: 'rgba(255,59,59,0.4)', wait: 'rgba(240,180,41,0.4)' };
+        banner.style.borderColor = borderColors[type];
+      }
+
+      setEl('masterSignalText', label, color);
+      setEl('masterScore', (total > 0 ? '+' : '') + total, color);
+
+      const subMap = {
+        buy:  `Composite score ${total}. Macro data favors USD weakness → Gold bullish.`,
+        sell: `Composite score ${total}. Macro data favors USD strength → Gold bearish.`,
+        wait: `Composite score ${total}. Mixed signals — no dominant directional edge.`,
+      };
+      setEl('masterSubtext', subMap[type]);
+      setEl('masterBgLabel', label.replace(/[⬆⬇—\s]+/, '').trim());
+
+      updateScoreBar('masterFill', total, type, maxAbs);
+    }
+
+    // ─── RENDER MINI SCORE PILLS ──────────────────────────────────────
+
+    function renderMiniScores(nfp, cpi, growth, fed) {
+      const pairs = [
+        { scoreId: 'miniNfpScore',    barId: 'miniNfpBar',    score: nfp    },
+        { scoreId: 'miniCpiScore',    barId: 'miniCpiBar',    score: cpi    },
+        { scoreId: 'miniGrowthScore', barId: 'miniGrowthBar', score: growth },
+        { scoreId: 'miniFedScore',    barId: 'miniFedBar',    score: fed    },
+      ];
+      pairs.forEach(({ scoreId, barId, score }) => {
+        if (score === undefined || score === null) return;
+        const type  = classifyByScore(score);
+        const color = signalColor(type);
+        setEl(scoreId, fmtScore(score), color);
+        const bar = document.getElementById(barId);
+        if (bar) { bar.style.background = color; bar.style.boxShadow = `0 0 4px ${color}99`; }
+      });
+    }
+
+    // ─── RENDER NEWS RADAR ────────────────────────────────────────────
+
+    function renderNews(newsArr) {
+      const grid = document.getElementById('newsGrid');
+      if (!grid) return;
+
+      if (!newsArr || newsArr.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full flex items-center justify-center py-8">
+            <span class="font-mono text-xs text-[#484F58]">No upcoming USD events found.</span>
+          </div>`;
+        setEl('newsCount', '0 events');
+        return;
+      }
+
+      setEl('newsCount', newsArr.length + ' events');
+
+      grid.innerHTML = newsArr.map((item, idx) => {
+        const impact = (item.impact || item.importance || '').toLowerCase();
+        const impactClass = impact.includes('high') ? 'impact-high'
+                          : impact.includes('med')  ? 'impact-medium'
+                          : 'impact-low';
+        const impactColor = impact.includes('high') ? '#FF3B3B'
+                          : impact.includes('med')  ? '#F0B429'
+                          : '#484F58';
+
+        // Format date to local time
+        let dtStr = item.date || item.datetime || item.time || '';
+        let localTime = dtStr;
+        try {
+          const d = new Date(dtStr);
+          if (!isNaN(d.getTime())) {
+            localTime = d.toLocaleString('en-US', {
+              month: 'short', day: 'numeric',
+              hour: '2-digit', minute: '2-digit',
+              hour12: true
+            });
+          }
+        } catch(e) {}
+
+        const forecast = item.forecast !== null && item.forecast !== undefined
+          ? String(item.forecast)
+          : item.estimate !== null && item.estimate !== undefined
+          ? String(item.estimate)
+          : '—';
+
+        const previous = item.previous !== null && item.previous !== undefined ? String(item.previous) : '—';
+        const eventName = item.event || item.name || item.title || 'Unknown Event';
+
+        return `
+          <div class="news-item news-pill ${impactClass} bg-[#0D1117] px-3 py-3 m-1"
+               style="animation-delay: ${idx * 40}ms">
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <div class="font-mono text-[10px] font-bold text-[#E6EDF3] leading-snug line-clamp-2">${eventName}</div>
+              <span class="shrink-0 font-mono text-[8px] px-1.5 py-0.5 border"
+                    style="color:${impactColor};border-color:${impactColor}33;background:${impactColor}11">
+                ${(item.impact || item.importance || 'N/A').toUpperCase()}
+              </span>
+            </div>
+            <div class="flex items-end justify-between gap-2">
+              <div>
+                <div class="font-mono text-[8px] text-[#484F58] mb-0.5">DATE / TIME</div>
+                <div class="font-mono text-[9px] text-[#8B949E]">${localTime}</div>
+              </div>
+              <div class="text-right">
+                <div class="font-mono text-[8px] text-[#484F58] mb-0.5">FORECAST</div>
+                <div class="font-mono text-[9px] font-bold text-[#E6EDF3]">${forecast}</div>
+              </div>
+              <div class="text-right">
+                <div class="font-mono text-[8px] text-[#484F58] mb-0.5">PREV</div>
+                <div class="font-mono text-[9px] text-[#8B949E]">${previous}</div>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // ─── MAIN LOAD ────────────────────────────────────────────────────
+
     async function loadData() {
-      const btn = document.getElementById('refreshBtn');
-      const icon = document.getElementById('refreshIcon');
-      const statusEl = document.getElementById('lastUpdate');
+      const btn    = document.getElementById('refreshBtn');
+      const icon   = document.getElementById('refreshIcon');
+      const status = document.getElementById('lastUpdate');
 
       btn.disabled = true;
       icon.classList.add('spinning');
-      statusEl.textContent = 'FETCHING...';
-
+      status.textContent = 'FETCHING...';
       document.getElementById('errorToast').classList.add('hidden');
 
       try {
         const res = await fetch('/api/predict');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-
         if (!data.success) throw new Error(data.error || 'Unknown error');
 
-        renderNFP(data.nfp);
-        renderCPI(data.cpi);
-        renderCombined(data.nfp, data.cpi);
+        // Render all 4 predictors, collect scores
+        const nfpScore    = renderNFP(data.nfp);
+        const cpiScore    = renderCPI(data.cpi);
+        const growthScore = renderGrowth(data.growth  || data.gdp || null);
+        const fedScore    = renderFed(data.fed        || data.fed_rate || null);
+
+        renderMiniScores(nfpScore, cpiScore, growthScore, fedScore);
+        renderMaster([nfpScore, cpiScore, growthScore, fedScore]);
+        renderNews(data.upcoming_news || data.upcomingNews || []);
 
         const ts = new Date(data.timestamp);
-        statusEl.textContent = 'UPDATED ' + ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        status.textContent = 'UPDATED ' + ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
       } catch (err) {
         console.error(err);
-        document.getElementById('errorMsg').textContent = 'Error: ' + err.message;
+        document.getElementById('errorMsg').textContent  = 'Error: ' + err.message;
         document.getElementById('errorToast').classList.remove('hidden');
-        statusEl.textContent = 'FETCH FAILED';
-
-        // Auto-hide toast
-        setTimeout(() => document.getElementById('errorToast').classList.add('hidden'), 5000);
+        status.textContent = 'FETCH FAILED';
+        setTimeout(() => document.getElementById('errorToast').classList.add('hidden'), 6000);
       } finally {
         btn.disabled = false;
         icon.classList.remove('spinning');
       }
     }
 
-    // Auto-load on page open
     document.addEventListener('DOMContentLoaded', loadData);
   </script>
 </body>
