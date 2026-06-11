@@ -1,5 +1,5 @@
 // api/predict.js — DEPRESSEDESIGN Macro Predictor Backend
-// Vercel Serverless Function (Node.js) - THE INSTITUTIONAL SMART-MONEY UPGRADE
+// Vercel Serverless Function (Node.js) - V19 (THE INSTITUTIONAL GOD ENGINE)
 
 const axios = require("axios");
 
@@ -7,7 +7,6 @@ const TELEGRAM_TOKEN = "8325927674:AAF3xv3r0NRRTet5H-xaK1DKIwWshemVOeU";
 const TELEGRAM_CHAT_ID = "5595296615";
 
 // ─── GLOBAL MEMORY CACHE ─────────────────────────────────────────────────────
-// BAGIAN INI TIDAK DIUBAH SAMA SEKALI
 let lastSentSignalID = "";
 let isSignalActive = false;
 let cachedEvents = [];
@@ -15,7 +14,6 @@ let lastFetchTime = 0;
 let warnedEvents = new Set();
 
 // ─── TELEGRAM SENDERS ────────────────────────────────────────────────────────
-// BAGIAN INI TIDAK DIUBAH SAMA SEKALI
 async function sendTelegramAlert(masterSignal, totalScore, dxy, nfp, cpi, growth, fed) {
   try {
     if (totalScore > -40 && totalScore < 40) return;
@@ -48,15 +46,14 @@ async function sendPreNewsWarning(newsItem) {
   } catch (err) {}
 }
 
-// ─── THE SMART CACHE ENGINE ──────────────────────────────────────────────────
-// BAGIAN INI TIDAK DIUBAH SAMA SEKALI
+// ─── THE SMART CACHE ENGINE (GLOBAL TRADINGVIEW DATA UNLOCKED) ───────────────
 async function fetchTradingViewData() {
   const now = Date.now();
   let needFreshData = false;
   if (cachedEvents.length === 0 || (now - lastFetchTime) > 900000) needFreshData = true;
   else {
     const hasNewsWindow = cachedEvents.some(e => {
-      if (e.country !== "US" && e.currency !== "USD") return false;
+      // Fokus trigger reset ke semua news
       const diffMins = (now - new Date(e.date).getTime()) / 60000;
       return diffMins >= -5 && diffMins <= 15; 
     });
@@ -65,33 +62,28 @@ async function fetchTradingViewData() {
   if (!needFreshData) return cachedEvents;
   try { 
     const today = new Date(); const fromDate = new Date(today); fromDate.setDate(today.getDate() - 45); const toDate = new Date(today); toDate.setDate(today.getDate() + 15); 
-    const res = await axios.get(`https://economic-calendar.tradingview.com/events?from=${fromDate.toISOString()}&to=${toDate.toISOString()}&countries=US`, { timeout: 10000, headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json', 'Origin': 'https://www.tradingview.com', 'Referer': 'https://www.tradingview.com/' } }); 
+    // HAPUS filter "&countries=US" agar narik data Global
+    const res = await axios.get(`https://economic-calendar.tradingview.com/events?from=${fromDate.toISOString()}&to=${toDate.toISOString()}`, { timeout: 10000, headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json', 'Origin': 'https://www.tradingview.com', 'Referer': 'https://www.tradingview.com/' } }); 
     if (res.data && res.data.result && res.data.result.length > 0) { cachedEvents = res.data.result; lastFetchTime = now; }
     return cachedEvents;
   } catch (err) { return cachedEvents; } 
 }
 
-// ─── MATHEMATICAL & TECHNICAL INDICATORS ENGINE (UPDATED LOGIC) ──────────────
+// ─── MATHEMATICAL & TECHNICAL INDICATORS ENGINE (V19) ────────────────────────
 function calculateEMA(data, period) { const k = 2 / (period + 1); let emaArray = [data[0]]; for (let i = 1; i < data.length; i++) { emaArray.push(data[i] * k + emaArray[i - 1] * (1 - k)); } return emaArray; }
 function findPivots(highs, lows, leftBars, rightBars) { let pivotHighs = []; let pivotLows = []; for (let i = leftBars; i < highs.length - rightBars; i++) { let isHigh = true; let isLow = true; for (let j = i - leftBars; j <= i + rightBars; j++) { if (i === j) continue; if (highs[j] >= highs[i]) isHigh = false; if (lows[j] <= lows[i]) isLow = false; } if (isHigh) pivotHighs.push({ index: i, val: highs[i] }); if (isLow) pivotLows.push({ index: i, val: lows[i] }); } return { pivotHighs, pivotLows }; }
 
-// UPDATE: RSI sekarang mendukung pengembalian bentuk Array untuk membaca Hook
-function calculateRSI(closes, period = 14, returnArray = false) {
-  let rsiArray = [];
+function calculateRSI(closes, period = 14) {
   let gains = 0, losses = 0;
   for(let i=1; i<=period; i++) { let diff = closes[i] - closes[i-1]; if(diff>=0) gains += diff; else losses -= diff; }
   let avgGain = gains/period; let avgLoss = losses/period;
-  
-  if (avgLoss === 0) rsiArray.push(100); else rsiArray.push(100 - (100/(1+(avgGain/avgLoss))));
-
   for(let i=period+1; i<closes.length; i++) {
     let diff = closes[i] - closes[i-1];
     if(diff>=0){ avgGain = (avgGain*13 + diff)/14; avgLoss = (avgLoss*13)/14; }
     else { avgGain = (avgGain*13)/14; avgLoss = (avgLoss*13 - diff)/14; }
-    
-    if (avgLoss === 0) rsiArray.push(100); else rsiArray.push(100 - (100/(1+(avgGain/avgLoss))));
   }
-  return returnArray ? rsiArray : rsiArray[rsiArray.length - 1];
+  let rs = avgGain/avgLoss;
+  return 100 - (100/(1+rs));
 }
 
 function calculateATR(h, l, c, period = 14) {
@@ -127,7 +119,7 @@ async function fetchChartData(interval, range) {
   return { c, o, h, l, v, current: c[c.length - 1] };
 }
 
-// ─── THE NEW INSTITUTIONAL GOD ENGINE (UPDATED LOGIC) ────────────────────────
+// ─── THE NEW INSTITUTIONAL GOD ENGINE (V19) ──────────────────────────────────
 async function calculateNativeAlgorithms() {
   try {
     const [h1, m5, m1] = await Promise.all([ fetchChartData('1h', '5d'), fetchChartData('5m', '2d'), fetchChartData('1m', '1d') ]);
@@ -144,98 +136,54 @@ async function calculateNativeAlgorithms() {
     const m5Sup = m5Pivots.pivotLows.length > 0 ? m5Pivots.pivotLows[m5Pivots.pivotLows.length - 1].val : m5.l[m5.l.length - 3];
     const fvg = findFVG(m5.o, m5.h, m5.l, m5.c);
 
-    // 3. LTF DYNAMICS (M1) - Momentum, Volatility & Volume Anomaly
-    const m1RsiArr = calculateRSI(m1.c, 14, true);
-    const m1Rsi = m1RsiArr[m1RsiArr.length - 1];
-    const m1Atr = calculateATR(m1.h, m1.l, m1.c, 14); 
-    
-    // NEW: Volume Anomaly Filter
-    const m1VolEma = calculateEMA(m1.v, 20);
-    const avgVol = m1VolEma[m1VolEma.length - 1];
-
-    // FVG Magnet Logic
-    let buyTarget = fvg.bullFVG && fvg.bullFVG.top < m5Sup + 2 ? fvg.bullFVG.top : m5Sup;
-    let sellTarget = fvg.bearFVG && fvg.bearFVG.btm > m5Res - 2 ? fvg.bearFVG.btm : m5Res;
-
-    // Data 3 Candle Terakhir M1 untuk validasi sentuhan & konfirmasi
-    const recentLows = m1.l.slice(-3);
-    const recentHighs = m1.h.slice(-3);
-    const recentVols = m1.v.slice(-3);
-
-    // Filter Deteksi (True / False)
-    const touchedBuyTarget = recentLows.some(l => l <= buyTarget + 2.0);
-    const touchedSellTarget = recentHighs.some(h => h >= sellTarget - 2.0);
-    const hasVolSpike = recentVols.some(vol => vol > (avgVol * 1.5));
-    
-    // RSI Hook (Turun ke bawah 40 lalu membelok naik, atau kebalikannya)
-    const isRsiHookBuy = m1RsiArr.slice(-3).some(r => r < 40) && m1Rsi > m1RsiArr[m1RsiArr.length - 2];
-    const isRsiHookSell = m1RsiArr.slice(-3).some(r => r > 60) && m1Rsi < m1RsiArr[m1RsiArr.length - 2];
-    
-    // Simple M1 ChoCH (Close candle terbaru membreak titik ekstrim candle sebelumnya)
-    const isChochBuy = m1.c[m1.c.length-1] > m1.h[m1.h.length-2];
-    const isChochSell = m1.c[m1.c.length-1] < m1.l[m1.l.length-2];
+    // 3. LTF DYNAMICS (M1) - Momentum & Volatility
+    const m1Rsi = calculateRSI(m1.c, 14);
+    const m1Atr = calculateATR(m1.h, m1.l, m1.c, 14); // Dynamic pip measurement
 
     let position = "WAIT & SEE / NO SETUP"; let entry = "0.00"; let sl = "0.00"; let tp1 = "0.00"; let tp2 = "0.00"; let reasonArr = [];
 
-    // SETUP BUY: H1 Bullish + Harga Touch Zona + ChoCH + Vol Spike + RSI Hook
-    if (h1Trend === "BULLISH" && touchedBuyTarget) {
-      if (isChochBuy && isRsiHookBuy && hasVolSpike) { 
+    // FVG Magnet Logic: Jika ada FVG, harga eksekusi ditarik sedikit ke area FVG
+    let buyTarget = fvg.bullFVG && fvg.bullFVG.top < m5Sup + 2 ? fvg.bullFVG.top : m5Sup;
+    let sellTarget = fvg.bearFVG && fvg.bearFVG.btm > m5Res - 2 ? fvg.bearFVG.btm : m5Res;
+
+    // SETUP BUY: H1 Bullish + Harga masuk Demand/FVG + RSI Hook Up (Oversold)
+    if (h1Trend === "BULLISH" && currentPrice <= (buyTarget + 2.0) && currentPrice >= (buyTarget - 1.5)) {
+      if (m1Rsi < 40) { // Momentum filter
         position = "BUY LIMIT / BUY NOW (LTF SNIPER)";
         entry = currentPrice.toFixed(2);
-        sl = (buyTarget - (m1Atr * 1.5)).toFixed(2); 
-        tp1 = (currentPrice + (m1Atr * 3)).toFixed(2); 
+        sl = (buyTarget - (m1Atr * 1.5)).toFixed(2); // SL Dinamis
+        tp1 = (currentPrice + (m1Atr * 3)).toFixed(2); // TP Dinamis
         tp2 = (currentPrice + (m1Atr * 6)).toFixed(2);
         reasonArr = [
           `HTF (H1): Market structure sejajar dengan tren BULLISH`,
-          `MTF (M5): Harga memitigasi Demand / area FVG Magnet ($${buyTarget.toFixed(2)})`,
-          `LTF (M1): Konfirmasi ChoCH valid (Close break Prev High)`,
-          `MOMENTUM: RSI Hook terbentuk & Anomali Volume (>1.5x) terdeteksi!`,
+          `MTF (M5): Harga masuk ke Demand / area FVG Magnet ($${buyTarget.toFixed(2)})`,
+          `LTF (M1): RSI M1 (${m1Rsi.toFixed(1)}) mendeteksi exhaust & potensi hook up`,
           `VOLATILITY: Stop Loss & Target dilindungi oleh perhitungan Dynamic ATR (${m1Atr.toFixed(2)} pts)`
-        ];
-      } else {
-        // Pending State
-        let pendingConf = !isChochBuy ? "Menunggu ChoCH M1" : !hasVolSpike ? "Menunggu Volume Spike" : "Menunggu RSI Hook UP";
-        let fvgMsg = fvg.bullFVG ? ` (Terdapat Bullish FVG di $${fvg.bullFVG.top.toFixed(2)})` : "";
-        reasonArr = [
-          `HTF (H1): Bias directional mengikuti arus BULLISH`,
-          `MTF (M5): Harga sudah menyentuh area likuiditas ($${buyTarget.toFixed(2)})${fvgMsg}`,
-          `LTF (M1): Sedang memvalidasi eksekusi... (${pendingConf})`
         ];
       }
     }
-    // SETUP SELL: H1 Bearish + Harga Touch Zona + ChoCH + Vol Spike + RSI Hook
-    else if (h1Trend === "BEARISH" && touchedSellTarget) {
-      if (isChochSell && isRsiHookSell && hasVolSpike) { 
+    // SETUP SELL: H1 Bearish + Harga masuk Supply/FVG + RSI Hook Down (Overbought)
+    else if (h1Trend === "BEARISH" && currentPrice >= (sellTarget - 2.0) && currentPrice <= (sellTarget + 1.5)) {
+      if (m1Rsi > 60) { // Momentum filter
         position = "SELL LIMIT / SELL NOW (LTF SNIPER)";
         entry = currentPrice.toFixed(2);
-        sl = (sellTarget + (m1Atr * 1.5)).toFixed(2); 
-        tp1 = (currentPrice - (m1Atr * 3)).toFixed(2); 
+        sl = (sellTarget + (m1Atr * 1.5)).toFixed(2); // SL Dinamis
+        tp1 = (currentPrice - (m1Atr * 3)).toFixed(2); // TP Dinamis
         tp2 = (currentPrice - (m1Atr * 6)).toFixed(2);
         reasonArr = [
           `HTF (H1): Market structure sejajar dengan tren BEARISH`,
-          `MTF (M5): Harga pullback memitigasi Supply / area FVG Magnet ($${sellTarget.toFixed(2)})`,
-          `LTF (M1): Konfirmasi ChoCH valid (Close break Prev Low)`,
-          `MOMENTUM: RSI Hook terbentuk & Anomali Volume (>1.5x) terdeteksi!`,
+          `MTF (M5): Harga pullback ke Supply / area FVG Magnet ($${sellTarget.toFixed(2)})`,
+          `LTF (M1): RSI M1 (${m1Rsi.toFixed(1)}) mendeteksi overbought, siap terjun`,
           `VOLATILITY: Stop Loss & Target dilindungi oleh perhitungan Dynamic ATR (${m1Atr.toFixed(2)} pts)`
-        ];
-      } else {
-        // Pending State
-        let pendingConf = !isChochSell ? "Menunggu ChoCH M1" : !hasVolSpike ? "Menunggu Volume Spike" : "Menunggu RSI Hook DOWN";
-        let fvgMsg = fvg.bearFVG ? ` (Terdapat Bearish FVG di $${fvg.bearFVG.btm.toFixed(2)})` : "";
-        reasonArr = [
-          `HTF (H1): Bias directional mengikuti arus BEARISH`,
-          `MTF (M5): Harga sudah menyentuh area likuiditas ($${sellTarget.toFixed(2)})${fvgMsg}`,
-          `LTF (M1): Sedang memvalidasi eksekusi... (${pendingConf})`
         ];
       }
     } else {
-      // Kondisi Aman (Menunggu Harga)
       const waitTarget = h1Trend === "BULLISH" ? buyTarget : sellTarget;
       let fvgMsg = h1Trend === "BULLISH" && fvg.bullFVG ? ` (Terdapat Bullish FVG di $${fvg.bullFVG.top.toFixed(2)})` : h1Trend === "BEARISH" && fvg.bearFVG ? ` (Terdapat Bearish FVG di $${fvg.bearFVG.btm.toFixed(2)})` : "";
       reasonArr = [
         `HTF (H1): Bias directional mengikuti arus ${h1Trend}`,
         `MTF (M5): Menunggu mitigasi di area likuiditas SMC ($${waitTarget.toFixed(2)})${fvgMsg}`,
-        `LTF (M1): RSI saat ini di ${m1Rsi.toFixed(1)}. Menunggu harga masuk ke zona eksekusi.`
+        `LTF (M1): RSI saat ini di ${m1Rsi.toFixed(1)}. Menunggu konfirmasi momentum.`
       ];
     }
 
@@ -246,7 +194,6 @@ async function calculateNativeAlgorithms() {
 }
 
 // ─── DATA FETCHERS & SCORING ENGINES ─────────────────────────────────────────
-// BAGIAN INI TIDAK DIUBAH SAMA SEKALI
 async function fetchDXY() { try { const res = await axios.get('https://query2.finance.yahoo.com/v8/finance/chart/DX-Y.NYB?interval=1d&range=2d', { timeout: 8000, headers: { 'User-Agent': 'Mozilla/5.0' } }); const current = res.data.chart.result[0].meta.regularMarketPrice; return { current: parseFloat(current.toFixed(2)), status: current >= res.data.chart.result[0].meta.previousClose ? "BULLISH (UP)" : "BEARISH (DOWN)" }; } catch (err) { return { current: "N/A", status: "OFFLINE" }; } }
 async function fetchCrudeOil() { try { const res = await axios.get('https://query2.finance.yahoo.com/v8/finance/chart/CL=F?interval=1d&range=45d', { timeout: 8000, headers: { 'User-Agent': 'Mozilla/5.0' } }); const closes = res.data.chart.result[0].indicators.quote[0].close.filter(c => c !== null); return { current: closes[closes.length - 1], avg30: closes.slice(-30).reduce((a,b) => a+b, 0) / Math.min(closes.length, 30) }; } catch (err) { return { current: null, avg30: null }; } }
 function findLatestReleasedEvent(events, keywords) { const matches = events.filter(e => keywords.some(kw => (e.title || e.indicator || "").toLowerCase().includes(kw.toLowerCase())) && e.actual !== undefined && e.actual !== null && e.actual !== ""); if (matches.length === 0) return null; matches.sort((a, b) => new Date(b.date) - new Date(a.date)); return matches[0]; }
@@ -257,7 +204,6 @@ function scoreGrowth(events) { let score = 0; const components = {}; const gdp =
 function scoreFed(events) { let score = 0; const components = {}; const fed = findLatestReleasedEvent(events, ["fed interest rate", "interest rate decision"]); if (fed) { const pts = fed.actual >= fed.forecast ? 100 : -100; score += pts; components.fed = { event: fed.title, actual: fed.actual, estimate: fed.forecast, points: pts, status: pts > 0 ? "HAWKISH" : "DOVISH" }; } else components.fed = { event: "Fed Interest Rate", actual: "N/A", estimate: "N/A", points: 0, status: "NO DATA" }; return { score, signal: score > 0 ? "HAWKISH" : score < 0 ? "DOVISH" : "MIXED", components }; }
 
 // ─── MAIN ROUTER HANDLER ─────────────────────────────────────────────────────
-// BAGIAN INI TIDAK DIUBAH SAMA SEKALI
 module.exports = async (req, res) => {
   if (req.method === "OPTIONS") { res.setHeader("Access-Control-Allow-Origin", "*"); res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS"); return res.status(200).end(); }
   res.setHeader("Access-Control-Allow-Origin", "*"); res.setHeader("Content-Type", "application/json");
@@ -281,6 +227,13 @@ module.exports = async (req, res) => {
     const totalScore = nfp.score + cpi.score + growth.score + fed.score;
     const masterSignal = totalScore >= 40 ? "STRONG SELL XAU" : totalScore <= -40 ? "STRONG BUY XAU" : "NEUTRAL";
 
+    // GLOBAL NEWS EXTRACTION UNTUK WEB RADAR 
+    const nowMs = Date.now();
+    const globalUpcoming = events.filter(e => {
+        const diffMins = (new Date(e.date).getTime() - nowMs) / 60000;
+        return diffMins > -15; // Tarik data dr 15 mnt lalu (biar dapet actualnya) sampe masa depan
+    }).sort((a,b) => new Date(a.date) - new Date(b.date)).slice(0, 15);
+
     if (isCron) {
       const currentSignalID = tech.position + "_" + tech.entry;
       if (!tech.position.includes("WAIT & SEE")) {
@@ -297,7 +250,6 @@ module.exports = async (req, res) => {
         }
       }
 
-      const nowMs = Date.now();
       const upcomingNews = events.filter(e => {
         if (e.country !== "US" && e.currency !== "USD") return false;
         const diffMins = (new Date(e.date).getTime() - nowMs) / 60000;
@@ -321,7 +273,8 @@ module.exports = async (req, res) => {
       dxy_live: dxy,
       master_signal: { signal: masterSignal, total_score: totalScore },
       nfp, cpi, growth, fed,
-      technical_signal: tech
+      technical_signal: tech,
+      global_upcoming: globalUpcoming // Passing ke UI
     });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
