@@ -1096,32 +1096,171 @@
       .forEach(({scoreId,barId,score})=>{ if(score==null)return; const type=classifyByScore(score),color=signalColor(type); setEl(scoreId,fmtScore(score),color); const bar=document.getElementById(barId); if(bar){bar.style.background=color;bar.style.boxShadow=`0 0 4px ${color}99`;} });
     }
 
-    function renderNews(newsArr) {
-      const grid=document.getElementById('newsGrid'); if(!grid)return;
-      if(!newsArr||!newsArr.length){grid.innerHTML=`<div class="col-span-full flex items-center justify-center py-8"><span class="font-mono text-xs text-[#484F58]">No upcoming USD events found.</span></div>`;setEl('newsCount','0 events');return;}
-      setEl('newsCount',newsArr.length+' events');
-      grid.innerHTML=newsArr.map((item,idx)=>{
-        const impact=(item.impact||item.importance||'').toLowerCase();
-        const impactClass=impact.includes('high')?'impact-high':impact.includes('med')?'impact-medium':'impact-low';
-        const impactColor=impact.includes('high')?'#FF3B3B':impact.includes('med')?'#F0B429':'#484F58';
-        let localTime=item.date||item.datetime||item.time||'';
-        try{const d=new Date(localTime);if(!isNaN(d.getTime()))localTime=d.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:true});}catch(e){}
-        const forecast=item.forecast!=null?String(item.forecast):item.estimate!=null?String(item.estimate):'—';
-        const previous=item.previous!=null?String(item.previous):'—';
-        const eventName=item.event||item.name||item.title||'Unknown Event';
-        return `<div class="news-item news-pill ${impactClass} bg-[#0D1117] px-3 py-3 m-1" style="animation-delay:${idx*40}ms">
-          <div class="flex items-start justify-between gap-2 mb-2">
-            <div class="font-mono text-[10px] font-bold text-[#E6EDF3] leading-snug line-clamp-2">${eventName}</div>
-            <span class="shrink-0 font-mono text-[8px] px-1.5 py-0.5 border" style="color:${impactColor};border-color:${impactColor}33;background:${impactColor}11">${(item.impact||item.importance||'N/A').toUpperCase()}</span>
-          </div>
-          <div class="flex items-end justify-between gap-2">
-            <div><div class="font-mono text-[8px] text-[#484F58] mb-0.5">DATE / TIME</div><div class="font-mono text-[9px] text-[#8B949E]">${localTime}</div></div>
-            <div class="text-right"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">FORECAST</div><div class="font-mono text-[9px] font-bold text-[#E6EDF3]">${forecast}</div></div>
-            <div class="text-right"><div class="font-mono text-[8px] text-[#484F58] mb-0.5">PREV</div><div class="font-mono text-[9px] text-[#8B949E]">${previous}</div></div>
-          </div>
-        </div>`;
-      }).join('');
+function renderNews(newsArr) {
+  const grid = document.getElementById('newsGrid');
+  if (!grid) return;
+
+  if (!newsArr || !newsArr.length) {
+    grid.innerHTML = `
+      <div class="col-span-full flex items-center justify-center py-8">
+        <span class="font-mono text-xs text-[#484F58]">
+          No upcoming USD events found.
+        </span>
+      </div>
+    `;
+    setEl('newsCount', '0 events');
+    return;
+  }
+
+  setEl('newsCount', newsArr.length + ' events');
+
+  grid.innerHTML = newsArr.map((item, idx) => {
+
+    const impactRaw = item.impact ?? item.importance ?? "";
+
+    let impact = "low";
+
+    if (typeof impactRaw === "string") {
+      impact = impactRaw.toLowerCase();
+
+      if (impact.includes("high")) {
+        impact = "high";
+      } else if (
+        impact.includes("med") ||
+        impact.includes("medium")
+      ) {
+        impact = "medium";
+      } else {
+        impact = "low";
+      }
+
+    } else if (Number(impactRaw) === 3) {
+      impact = "high";
+    } else if (Number(impactRaw) === 2) {
+      impact = "medium";
+    } else {
+      impact = "low";
     }
+
+    const impactClass =
+      impact === "high"
+        ? "impact-high"
+        : impact === "medium"
+        ? "impact-medium"
+        : "impact-low";
+
+    const impactColor =
+      impact === "high"
+        ? "#FF3B3B"
+        : impact === "medium"
+        ? "#F0B429"
+        : "#484F58";
+
+    const impactLabel =
+      impact === "high"
+        ? "HIGH"
+        : impact === "medium"
+        ? "MEDIUM"
+        : "LOW";
+
+    let localTime =
+      item.date ||
+      item.datetime ||
+      item.time ||
+      "";
+
+    try {
+      const d = new Date(localTime);
+
+      if (!isNaN(d.getTime())) {
+        localTime = d.toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true
+        });
+      }
+    } catch (e) {}
+
+    const forecast =
+      item.forecast != null
+        ? String(item.forecast)
+        : item.estimate != null
+        ? String(item.estimate)
+        : "—";
+
+    const previous =
+      item.previous != null
+        ? String(item.previous)
+        : "—";
+
+    const eventName =
+      item.event ||
+      item.name ||
+      item.title ||
+      "Unknown Event";
+
+    return `
+      <div class="news-item news-pill ${impactClass} bg-[#0D1117] px-3 py-3 m-1" style="animation-delay:${idx * 40}ms">
+
+        <div class="flex items-start justify-between gap-2 mb-2">
+
+          <div class="font-mono text-[10px] font-bold text-[#E6EDF3] leading-snug line-clamp-2">
+            ${eventName}
+          </div>
+
+          <span
+            class="shrink-0 font-mono text-[8px] px-1.5 py-0.5 border"
+            style="
+              color:${impactColor};
+              border-color:${impactColor}33;
+              background:${impactColor}11;
+            "
+          >
+            ${impactLabel}
+          </span>
+
+        </div>
+
+        <div class="flex items-end justify-between gap-2">
+
+          <div>
+            <div class="font-mono text-[8px] text-[#484F58] mb-0.5">
+              DATE / TIME
+            </div>
+
+            <div class="font-mono text-[9px] text-[#8B949E]">
+              ${localTime}
+            </div>
+          </div>
+
+          <div class="text-right">
+            <div class="font-mono text-[8px] text-[#484F58] mb-0.5">
+              FORECAST
+            </div>
+
+            <div class="font-mono text-[9px] font-bold text-[#E6EDF3]">
+              ${forecast}
+            </div>
+          </div>
+
+          <div class="text-right">
+            <div class="font-mono text-[8px] text-[#484F58] mb-0.5">
+              PREV
+            </div>
+
+            <div class="font-mono text-[9px] text-[#8B949E]">
+              ${previous}
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    `;
+  }).join('');
+}
 
     // ─── MAIN LOAD ───────────────────────────────────────────────────
     async function loadData() {
