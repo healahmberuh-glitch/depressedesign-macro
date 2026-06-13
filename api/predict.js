@@ -507,47 +507,107 @@ function scanOrderBlocks(m5, session) {
 }
 
 function scanBreakers(m5, session) {
+
   const zones = [];
-  const atr   = calculateATR(m5.h, m5.l, m5.c, 14);
+  const atr = calculateATR(m5.h, m5.l, m5.c, 14);
   const price = m5.current;
-  const len   = m5.c.length;
+  const len = m5.c.length;
 
   for (let i = len - 50; i < len - 5; i++) {
+
     if (i < 1) continue;
-    // Breaker: OB that has been broken through
-    // Bull breaker: was a Bearish OB, price broke above it → now support
+
+    // ==========================
+    // BULLISH BREAKER
+    // ==========================
+
     const isBullCandleHere = m5.c[i] > m5.o[i];
+
     if (isBullCandleHere) {
+
       const obHigh = m5.h[i];
-      // Was it broken by subsequent price moving above this level?
+      const obLow  = m5.l[i];
+
       let wasBroken = false;
-      for (let j = i+2; j < Math.min(i+15, len); j++) {
-        if (m5.l[j] > obHigh) { wasBroken = true; break; }
+
+      for (let j = i + 2; j < Math.min(i + 15, len); j++) {
+        if (m5.l[j] > obHigh) {
+          wasBroken = true;
+          break;
+        }
       }
+
+      if (!wasBroken) continue;
+
+      const midpoint = (obHigh + obLow) / 2;
+
+      // support harus masih berada di bawah harga sekarang
+      if (price < midpoint) continue;
+
       const retestedBreaker =
-    m5.l[len - 1] <= obHigh + atr * 0.2;
+        m5.l[len - 1] <= obHigh + atr * 0.2;
 
-const midpoint = (obHigh + (obHigh - atr * 0.2)) / 2;
+      if (!retestedBreaker) continue;
 
-const stillAboveBreaker =
-  price > midpoint;
+      zones.push({
+        type: "BRK",
+        typeLabel: "Breaker Block (Flipped Support)",
+        bias: "BUY",
+        high: obHigh + atr * 0.3,
+        low: obLow - atr * 0.2,
+        strength: 4,
+        reason: `Breaker di $${obHigh.toFixed(2)} — ex-resistance flip ke support setelah structure break`,
+        session,
+        id: `BRK_BULL_${i}_${obHigh.toFixed(2)}`
+      });
+    }
 
-if (
-    wasBroken &&
-    retestedBreaker &&
-    stillAboveBreaker
-) {
-        zones.push({
-          type: "BRK", typeLabel: "Breaker Block (Flipped Support)",
-          bias: "BUY",
-          high: obHigh + atr * 0.3, low: obHigh - atr * 0.2,
-          strength: 4,
-          reason: `Breaker di $${obHigh.toFixed(2)} — ex-resistance flip ke support setelah structure break`,
-          session, id: `BRK_BULL_${i}_${obHigh.toFixed(2)}`
-        });
+    // ==========================
+    // BEARISH BREAKER
+    // ==========================
+
+    const isBearCandleHere = m5.c[i] < m5.o[i];
+
+    if (isBearCandleHere) {
+
+      const obHigh = m5.h[i];
+      const obLow  = m5.l[i];
+
+      let wasBroken = false;
+
+      for (let j = i + 2; j < Math.min(i + 15, len); j++) {
+        if (m5.h[j] < obLow) {
+          wasBroken = true;
+          break;
+        }
       }
+
+      if (!wasBroken) continue;
+
+      const midpoint = (obHigh + obLow) / 2;
+
+      // resistance harus masih berada di atas harga sekarang
+      if (price > midpoint) continue;
+
+      const retestedBreaker =
+        m5.h[len - 1] >= obLow - atr * 0.2;
+
+      if (!retestedBreaker) continue;
+
+      zones.push({
+        type: "BRK",
+        typeLabel: "Breaker Block (Flipped Resistance)",
+        bias: "SELL",
+        high: obHigh + atr * 0.2,
+        low: obLow - atr * 0.3,
+        strength: 4,
+        reason: `Breaker di $${obLow.toFixed(2)} — ex-support flip ke resistance setelah structure break`,
+        session,
+        id: `BRK_BEAR_${i}_${obLow.toFixed(2)}`
+      });
     }
   }
+
   return zones;
 }
 
