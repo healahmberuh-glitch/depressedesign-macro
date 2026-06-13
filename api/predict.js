@@ -448,7 +448,9 @@ function scanFVG(m5, session) {
       }
     }
   }
+
   return zones;
+}
 }
 
 function scanOrderBlocks(m5, session) {
@@ -527,8 +529,10 @@ function scanBreakers(m5, session) {
       const retestedBreaker =
     m5.l[len - 1] <= obHigh + atr * 0.2;
 
+const midpoint = (obHigh + (obHigh - atr * 0.2)) / 2;
+
 const stillAboveBreaker =
-    price > obHigh;
+  price > midpoint;
 
 if (
     wasBroken &&
@@ -660,12 +664,18 @@ const filtered = deduped.filter(z => {
 
   return true;
 });
-     filtered.sort((a, b) => {
-      if (b.strength !== a.strength) return b.strength - a.strength;
-      const dA = Math.abs(price - (a.high + a.low) / 2);
-      const dB = Math.abs(price - (b.high + b.low) / 2);
-      return dA - dB;
-    });
+filtered.sort((a,b)=>{
+
+  const scoreA =
+    a.strength * 100 -
+    Math.abs(price - ((a.high + a.low) / 2));
+
+  const scoreB =
+    b.strength * 100 -
+    Math.abs(price - ((b.high + b.low) / 2));
+
+  return scoreB - scoreA;
+});
 
     // Return top 8
     return filtered.slice(0, 8).map(z => ({
