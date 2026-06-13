@@ -1337,11 +1337,37 @@ ${z.session || ""}
 
 }).join('');
 
-document.getElementById('entryTriggerCount').textContent =
-    `${(data.entry_triggers || []).length} active`;
 
-document.getElementById('entryTriggerGrid').innerHTML =
-    JSON.stringify(data.entry_triggers || [], null, 2);
+const entries = data.entry_triggers || [];
+
+document.getElementById('entryTriggerCount').textContent =
+`${entries.length} active`;
+
+if(!entries.length){
+
+  document.getElementById('entryTriggerGrid').innerHTML = `
+    <div class="flex items-center justify-center py-10">
+      <span class="font-mono text-xs text-[#484F58]">
+        Menunggu price masuk zona<span class="cursor">_</span>
+      </span>
+    </div>
+  `;
+
+} else {
+
+  document.getElementById('entryTriggerGrid').innerHTML =
+  entries.map(e => `
+    <div class="border border-[#21262D] bg-[#0D1117] p-3">
+      <div class="font-mono text-[10px] text-[#F0B429]">
+        ${e.signal || 'ENTRY'}
+      </div>
+      <div class="font-mono text-[12px] text-[#E6EDF3] mt-1">
+        ${e.entry || '-'}
+      </div>
+    </div>
+  `).join('');
+
+}
 
 
         const ts=new Date(data.timestamp);
