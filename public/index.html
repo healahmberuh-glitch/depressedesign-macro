@@ -1288,6 +1288,9 @@ function renderNews(newsArr) {
         // Dual signal rendering
         renderSwing(data.swing_signal || null);
         renderScalp(data.scalp_signal || null);
+console.log("ZONE:", data.zone_pantau);
+console.log("ENTRY:", data.entry_triggers);
+
 
         const ts=new Date(data.timestamp);
         status.textContent='UPDATED '+ts.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
