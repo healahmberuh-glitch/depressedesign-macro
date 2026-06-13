@@ -350,8 +350,8 @@ function scanFVG(m5, session) {
   const price = m5.current;
   const len = m5.c.length;
 
-  // Scan last 30 candles for unfilled FVGs
   for (let i = len - 30; i < len - 2; i++) {
+
     if (i < 2) continue;
 
     // =========================
