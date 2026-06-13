@@ -136,8 +136,8 @@
   <!-- Scrolling Ticker -->
   <div class="overflow-hidden bg-[#0D1117] border-b border-[#21262D] h-8 flex items-center">
     <div class="ticker-inner font-mono text-xs text-[#484F58]">
-      <span class="px-8">DEPRESSEDESIGN TRADING STATION &nbsp;·&nbsp; XAU/USD · DUAL SIGNAL ENGINE &nbsp;·&nbsp; SWING H4/H1 &nbsp;·&nbsp; SCALP M5 &nbsp;·&nbsp; NFP &nbsp;·&nbsp; CPI &nbsp;·&nbsp; GDP &nbsp;·&nbsp; FED RATE &nbsp;·&nbsp; ADP &nbsp;·&nbsp; JOLTS &nbsp;·&nbsp; ISM PMI &nbsp;·&nbsp; PPI &nbsp;·&nbsp; WTI CRUDE &nbsp;·&nbsp; NOT FINANCIAL ADVICE &nbsp;·&nbsp;</span>
-      <span class="px-8">DEPRESSEDESIGN TRADING STATION &nbsp;·&nbsp; XAU/USD · DUAL SIGNAL ENGINE &nbsp;·&nbsp; SWING H4/H1 &nbsp;·&nbsp; SCALP M5 &nbsp;·&nbsp; NFP &nbsp;·&nbsp; CPI &nbsp;·&nbsp; GDP &nbsp;·&nbsp; FED RATE &nbsp;·&nbsp; ADP &nbsp;·&nbsp; JOLTS &nbsp;·&nbsp; ISM PMI &nbsp;·&nbsp; PPI &nbsp;·&nbsp; WTI CRUDE &nbsp;·&nbsp; NOT FINANCIAL ADVICE &nbsp;·&nbsp;</span>
+      <span class="px-8">DEPRESSEDESIGN TRADING STATION &nbsp;·&nbsp; XAU/USD · ZONE PANTAU ENGINE v6.0 &nbsp;·&nbsp; SWING H4/H1 &nbsp;·&nbsp; SCALP M5 &nbsp;·&nbsp; M1 ENTRY TRIGGER &nbsp;·&nbsp; FVG &nbsp;·&nbsp; ORDER BLOCK &nbsp;·&nbsp; LIQUIDITY &nbsp;·&nbsp; BREAKER &nbsp;·&nbsp; NFP &nbsp;·&nbsp; CPI &nbsp;·&nbsp; GDP &nbsp;·&nbsp; FED RATE &nbsp;·&nbsp; NOT FINANCIAL ADVICE &nbsp;·&nbsp;</span>
+      <span class="px-8">DEPRESSEDESIGN TRADING STATION &nbsp;·&nbsp; XAU/USD · ZONE PANTAU ENGINE v6.0 &nbsp;·&nbsp; SWING H4/H1 &nbsp;·&nbsp; SCALP M5 &nbsp;·&nbsp; M1 ENTRY TRIGGER &nbsp;·&nbsp; FVG &nbsp;·&nbsp; ORDER BLOCK &nbsp;·&nbsp; LIQUIDITY &nbsp;·&nbsp; BREAKER &nbsp;·&nbsp; NFP &nbsp;·&nbsp; CPI &nbsp;·&nbsp; GDP &nbsp;·&nbsp; FED RATE &nbsp;·&nbsp; NOT FINANCIAL ADVICE &nbsp;·&nbsp;</span>
     </div>
   </div>
 
@@ -193,7 +193,7 @@
         </div>
         <div>
           <div class="font-mono text-sm font-bold tracking-[0.15em] text-[#E6EDF3] uppercase">XAU/USD TERMINAL</div>
-          <div class="font-mono text-[10px] text-[#484F58] tracking-[0.2em] uppercase">Dual Signal Engine v5.0 &nbsp;·&nbsp; Swing + Scalp &nbsp;·&nbsp; Macro + Technical</div>
+          <div class="font-mono text-[10px] text-[#484F58] tracking-[0.2em] uppercase">Zone Pantau Engine v6.0 &nbsp;·&nbsp; Swing + Scalp + M1 Trigger &nbsp;·&nbsp; Macro + Technical</div>
         </div>
       </div>
       <div class="flex items-center gap-6">
@@ -222,7 +222,7 @@
     <button class="tab-btn tab-tech" id="tabBtnTech" onclick="switchTab('tech')">
       <span class="tab-icon text-base leading-none">⚡</span>
       <span>Live Technical Terminal</span>
-      <span class="tab-badge">SWING · SCALP</span>
+      <span class="tab-badge">ZONE · SWING · SCALP</span>
     </button>
     <div class="tab-bar-right">
       <div class="flex items-center gap-2">
@@ -699,6 +699,70 @@
 
       </div><!-- /dual grid -->
     </div><!-- /max-w -->
+
+    <!-- ══ ZONE PANTAU PANEL ══ -->
+    <div class="max-w-[1400px] mx-auto px-6 pb-8">
+      <div class="border border-[#21262D] bg-[#0D1117]">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between px-5 py-3 border-b border-[#21262D] bg-[#080B0F]">
+          <div class="flex items-center gap-3">
+            <div class="relative w-4 h-4 flex items-center justify-center">
+              <div class="absolute w-4 h-4 rounded-full bg-[#A78BFA] opacity-20 animate-ping" style="animation-duration:2.5s;"></div>
+              <div class="w-2 h-2 rounded-full bg-[#A78BFA]" style="box-shadow:0 0 8px rgba(167,139,250,0.8);"></div>
+            </div>
+            <span class="font-mono text-xs font-bold text-[#E6EDF3] tracking-widest uppercase">🎯 Zone Pantau Active</span>
+            <span class="font-mono text-[8px] text-[#484F58] border border-[#21262D] px-2 py-0.5">Top 8 · Sorted by Strength + Proximity</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="hidden md:flex items-center gap-3 font-mono text-[8px] text-[#484F58]">
+              <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-sm bg-[#00FF88]"></span>BUY ZONE</span>
+              <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-sm bg-[#FF3B3B]"></span>SELL ZONE</span>
+              <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-sm bg-[#A78BFA]"></span>IN ZONE NOW</span>
+            </div>
+            <span class="font-mono text-[8px] text-[#484F58]" id="zoneTotalCount">— zones</span>
+          </div>
+        </div>
+
+        <!-- Zone Type Legend -->
+        <div class="px-5 py-2 border-b border-[#21262D] bg-[#0D1117] flex flex-wrap gap-x-5 gap-y-1">
+          <span class="font-mono text-[8px] text-[#484F58]">🔷 FVG — Fair Value Gap</span>
+          <span class="font-mono text-[8px] text-[#484F58]">🔶 OB — Order Block</span>
+          <span class="font-mono text-[8px] text-[#484F58]">⬜ PHP/PHL — Prev High/Low</span>
+          <span class="font-mono text-[8px] text-[#484F58]">💧 LIQ — Liquidity Level</span>
+          <span class="font-mono text-[8px] text-[#484F58]">🔀 BRK — Breaker Block</span>
+          <span class="font-mono text-[8px] text-[#484F58]">🕐 SESSION — Session Level</span>
+        </div>
+
+        <!-- Zone Grid -->
+        <div id="zoneGrid" class="p-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2 min-h-[120px]">
+          <div class="col-span-full flex items-center justify-center py-10">
+            <span class="font-mono text-xs text-[#484F58]">Scanning zones<span class="cursor">_</span></span>
+          </div>
+        </div>
+
+        <!-- Entry Triggers Section -->
+        <div class="border-t border-[#21262D]">
+          <div class="flex items-center justify-between px-5 py-3 border-b border-[#21262D] bg-[#080B0F]">
+            <div class="flex items-center gap-3">
+              <div class="relative w-3 h-3 flex items-center justify-center">
+                <div class="absolute w-3 h-3 rounded-full bg-[#F0B429] opacity-20 animate-ping"></div>
+                <div class="w-1.5 h-1.5 rounded-full bg-[#F0B429]" style="box-shadow:0 0 6px rgba(240,180,41,0.8);"></div>
+              </div>
+              <span class="font-mono text-[10px] font-bold text-[#E6EDF3] tracking-widest uppercase">⚡ Entry Triggers — M1 Confirmed</span>
+              <span class="font-mono text-[8px] text-[#484F58] border border-[#21262D] px-2 py-0.5">ChoCH displacement · Price dalam zona · RSI valid</span>
+            </div>
+            <span class="font-mono text-[8px] text-[#484F58]" id="entryTriggerCount">— active</span>
+          </div>
+          <div id="entryTriggerGrid" class="p-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2 min-h-[80px]">
+            <div class="col-span-full flex items-center justify-center py-6">
+              <span class="font-mono text-xs text-[#484F58]">Menunggu price masuk zona<span class="cursor">_</span></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
 
   </div><!-- /panelTech -->
 
