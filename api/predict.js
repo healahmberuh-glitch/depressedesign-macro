@@ -517,9 +517,9 @@ function scanBreakers(m5, session) {
 
     if (i < 1) continue;
 
-    // ==========================
-    // BULLISH BREAKER
-    // ==========================
+    // ==================================================
+    // BULLISH BREAKER (Flipped Support)
+    // ==================================================
 
     const isBullCandleHere = m5.c[i] > m5.o[i];
 
@@ -541,23 +541,21 @@ function scanBreakers(m5, session) {
 
       const midpoint = (obHigh + obLow) / 2;
 
-      // support harus masih berada di bawah harga sekarang
+      // Support harus berada di bawah harga sekarang
       if (price < midpoint) continue;
+
+      // Jangan ambil zone yang terlalu jauh
+      if (Math.abs(price - midpoint) > atr * 5) continue;
 
       const retestedBreaker =
         m5.l[len - 1] <= obHigh + atr * 0.2;
 
       if (!retestedBreaker) continue;
 
-      const zoneMidpoint = (obHigh + obLow) / 2;
-
-if (zoneMidpoint > price) {
-  continue;
-}
       zones.push({
         type: "BRK",
         typeLabel: "Breaker Block (Flipped Support)",
-        bias: "BUY",
+        bias: midpoint < price ? "BUY" : "TARGET",
         high: obHigh + atr * 0.3,
         low: obLow - atr * 0.2,
         strength: 4,
@@ -567,9 +565,9 @@ if (zoneMidpoint > price) {
       });
     }
 
-    // ==========================
-    // BEARISH BREAKER
-    // ==========================
+    // ==================================================
+    // BEARISH BREAKER (Flipped Resistance)
+    // ==================================================
 
     const isBearCandleHere = m5.c[i] < m5.o[i];
 
@@ -591,26 +589,21 @@ if (zoneMidpoint > price) {
 
       const midpoint = (obHigh + obLow) / 2;
 
-if (Math.abs(price - midpoint) > atr * 5)
-  continue;
+      // Jangan ambil zone yang terlalu jauh
+      if (Math.abs(price - midpoint) > atr * 5) continue;
 
-      // resistance harus masih berada di atas harga sekarang
+      // Resistance harus berada di atas harga sekarang
       if (price > midpoint) continue;
 
       const retestedBreaker =
         m5.h[len - 1] >= obLow - atr * 0.2;
 
       if (!retestedBreaker) continue;
-      
-const zoneMidpoint = (obHigh + obLow) / 2;
 
-if (zoneMidpoint < price) {
-  continue;
-}
       zones.push({
         type: "BRK",
         typeLabel: "Breaker Block (Flipped Resistance)",
-        bias: "SELL",
+        bias: midpoint > price ? "SELL" : "TARGET",
         high: obHigh + atr * 0.2,
         low: obLow - atr * 0.3,
         strength: 4,
