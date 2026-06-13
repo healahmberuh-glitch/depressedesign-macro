@@ -1300,7 +1300,9 @@ zones.map(z => {
 const color =
 z.bias === "BUY"
 ? "#00FF88"
-: "#FF3B3B";
+: z.bias === "SELL"
+? "#FF3B3B"
+: "#A78BFA";
 
 return `
 <div class="border border-[#21262D] bg-[#0D1117] p-3">
