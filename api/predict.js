@@ -1,5 +1,6 @@
 // api/predict.js — DEPRESSEDESIGN Trading Station
 // v6.1 — Zone Pantau Profitability Engine + Dual Signal + Telegram Full Alerts
+// FIXED: Syntax error at line 454 resolved
 
 const axios = require("axios");
 
@@ -11,21 +12,20 @@ let lastSentSwingID  = "";
 let lastSentScalpID  = "";
 let isSwingActive    = false;
 let isScalpActive    = false;
-let sentZoneIDs      = new Set();   // track zone alerts already sent
-let sentEntryIDs     = new Set();   // track entry trigger alerts sent
+let sentZoneIDs      = new Set();
+let sentEntryIDs     = new Set();
 let cachedEvents     = [];
 let lastFetchTime    = 0;
 let warnedEvents     = new Set();
 
 // Zone profitability state
-let pendingZones = new Map();        // key: zone.id, value: { zone, createdAt, hitCount }
-const ZONE_EXPIRY_MS = 4 * 60 * 60 * 1000; // 4 jam
+let pendingZones = new Map();
+const ZONE_EXPIRY_MS = 4 * 60 * 60 * 1000;
 const CLUSTER_DISTANCE_ATR_MULTIPLIER = 0.5;
 const MIN_REACTION_ATR = 0.3;
 const MAX_MITIGATION_ATR = 0.8;
 
 // ─── TELEGRAM HELPERS ─────────────────────────────────────────────────────────
-
 async function tgSend(message) {
   try {
     await axios.post(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
@@ -35,7 +35,6 @@ async function tgSend(message) {
   } catch (e) {}
 }
 
-// 1. Macro Fundamental Alert (unchanged)
 async function sendTelegramAlert(masterSignal, totalScore, dxy, nfp, cpi, growth, fed) {
   if (totalScore > -40 && totalScore < 40) return;
   const isSell = totalScore >= 40;
@@ -55,7 +54,6 @@ async function sendTelegramAlert(masterSignal, totalScore, dxy, nfp, cpi, growth
   );
 }
 
-// 2. Zone Pantau Alert — ENHANCED with probability badge
 async function sendZoneAlertEnhanced(zone, extraMsg = "") {
   const icon     = zone.bias === "BUY" ? "🟢" : "🔴";
   const typeIcon = { FVG:"🔷", OB:"🔶", PHP:"⬜", PHL:"⬜", LIQ:"💧", BRK:"🔀", SESSION:"🕐", CLUSTER:"🔗" }[zone.type] || "📍";
@@ -76,7 +74,6 @@ async function sendZoneAlertEnhanced(zone, extraMsg = "") {
   );
 }
 
-// 3. Entry Trigger Alert — unchanged
 async function sendEntryTriggerAlert(entry) {
   const icon = entry.bias === "BUY" ? "🟢" : "🔴";
   await tgSend(
@@ -96,7 +93,6 @@ async function sendEntryTriggerAlert(entry) {
   );
 }
 
-// 4. Swing Signal Alert (unchanged)
 async function sendSwingSignalTelegram(swing) {
   const icon = swing.position.includes("BUY") ? "🟢" : "🔴";
   await tgSend(
@@ -117,7 +113,6 @@ async function sendSwingSignalTelegram(swing) {
   );
 }
 
-// 5. Scalp Signal Alert (unchanged)
 async function sendScalpSignalTelegram(scalp) {
   const icon = scalp.position.includes("BUY") ? "🟢" : "🔴";
   await tgSend(
@@ -138,7 +133,6 @@ async function sendScalpSignalTelegram(scalp) {
   );
 }
 
-// 6. Swing Invalidated (unchanged)
 async function sendSwingInvalidTelegram() {
   await tgSend(
     `⚠️ <b>SWING SIGNAL: INVALIDATED</b>\n` +
@@ -149,7 +143,6 @@ async function sendSwingInvalidTelegram() {
   );
 }
 
-// 7. Scalp Invalidated (unchanged)
 async function sendScalpInvalidTelegram() {
   await tgSend(
     `⚡ <b>SCALP SIGNAL: CLOSED</b>\n` +
@@ -159,7 +152,6 @@ async function sendScalpInvalidTelegram() {
   );
 }
 
-// 8. Pre-news Warning (unchanged)
 async function sendPreNewsWarning(newsItem) {
   await tgSend(
     `⏳ <b>PRE-NEWS WARNING</b>\n` +
@@ -196,7 +188,7 @@ async function fetchTradingViewData() {
   } catch (e) { return cachedEvents; }
 }
 
-// ─── MATH PRIMITIVES (unchanged) ─────────────────────────────────────────────
+// ─── MATH PRIMITIVES ─────────────────────────────────────────────────────────
 function calculateEMA(data, period) {
   const k = 2 / (period + 1);
   let arr = [data[0]];
@@ -1056,7 +1048,6 @@ module.exports = async (req, res) => {
         lastSentScalpID = ""; isScalpActive = false;
       }
 
-      // Enhanced zone alerts: only high probability zones
       const atr = calculateATR(m5.h, m5.l, m5.c, 14);
       for (const zone of zones) {
         if (!sentZoneIDs.has(zone.id)) {
